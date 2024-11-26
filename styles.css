@@ -1,0 +1,19 @@
+/* Appliquer un fond noir à la page entière */
+body {
+    background-color: #000000 !important; /* Fond noir */
+    color: #000000 !important;           /* Texte blanc */
+}
+
+.css-18e3th9 { /* Conteneur principal Streamlit */
+    background-color: #000000 !important; /* Fond noir */
+    color: #000000 !important;
+}
+
+
+
+
+/* Bordures autour des visualisations */
+.css-1ht1j8u {
+    background-color: transparent !important; /* Fond transparent autour */
+    border: none !important;                  /* Pas de bordures supplémentaires */
+}
