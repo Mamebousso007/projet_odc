@@ -5,4 +5,5 @@ openpyxl
 Mako
 Markdown
 notebook
+matplotlib
 
