@@ -177,6 +177,9 @@ else:
             
 #             # Réinitialiser le formulaire après ajout
 #             st.rerun()
+# Aperçu des données
+st.subheader("Aperçu des données 📋")
+st.dataframe(df.head(), use_container_width=True)
 
 # Ajout de filtres interactifs
 st.sidebar.header("Filtres interactifs")
@@ -230,74 +233,64 @@ insertion_rate = (active_students / total_students * 100) if total_students > 0 
 female_students = len(filtered_data[filtered_data['SEXE'] == 'F']) if 'SEXE' in filtered_data.columns else 0
 feminization_rate = (female_students / total_students * 100) if total_students > 0 else 0
 
-# Template des KPI avec une taille uniforme et titres réduits
+# Création de styles pour les indicateurs avec dimensions fixes
 kpi_template = """
 <div style="
     background-color: {bg_color};
-    padding: 20px;
+    padding: 30px;
     border-radius: 10px;
     text-align: center;
     color: white;
-    font-size: 14px; /* Taille de texte réduite pour les titres */
+    font-size: 24px;
     font-weight: bold;
-    margin: 0 10px; /* Espacement horizontal */
+    margin-bottom: 20px;
+    width: 100%;
+    height: 200px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    flex-grow: 1; /* Permet de garder une taille égale */
-    min-width: 180px; /* Largeur minimale */
-    min-height: 140px; /* Hauteur minimale */
-    height: 100%; /* Hauteur maximale pour ajustement */
-    flex-basis: 200px; /* Définit une taille de base flexible */
-    word-wrap: break-word;
 ">
-    <div style="font-size: 12px; font-weight: normal; word-wrap: break-word; text-align: center;">{title}</div>
-    <div style="font-size: 24px; margin-top: 10px; text-align: center;">{value}</div>
+    <div style="font-size: 20px; font-weight: normal;">{title}</div>
+    <div style="font-size: 36px; margin-top: 10px;">{value}</div>
 </div>
 """
 
-st.header("📌 Indicateurs clés")
 
-# Créer un container flexible
-with st.container():
-    # Utiliser des colonnes pour aligner les KPI horizontalement
-    col1, col2, col3, col4, col5 = st.columns(5)
+st.header("📌 Indicateurs clés ")
+col1, col2, col3 = st.columns(3, gap="large")
 
-    with col1:
-        st.markdown(kpi_template.format(
-            bg_color="#4CAF50", title="Rémun. moy.", value=f"{avg_salary:.2f} "),
-            unsafe_allow_html=True)
+with col1:
+    st.markdown(kpi_template.format(
+        bg_color="#4CAF50", title="Rémunération moyenne", value=f"{avg_salary:.2f} FCFA"),
+        unsafe_allow_html=True)
 
-    with col2:
-        st.markdown(kpi_template.format(
-            bg_color="#2196F3", title="Total apprenants", value=total_students),
-            unsafe_allow_html=True)
+with col2:
+    st.markdown(kpi_template.format(
+        bg_color="#2196F3", title="Nombre total d'apprenants", value=total_students),
+        unsafe_allow_html=True)
 
-    with col3:
-        st.markdown(kpi_template.format(
-            bg_color="#FFC107", title="En poste", value=active_students),
-            unsafe_allow_html=True)
+with col3:
+    st.markdown(kpi_template.format(
+        bg_color="#FFC107", title="Apprenants en poste", value=active_students),
+        unsafe_allow_html=True)
 
-    with col4:
-        st.markdown(kpi_template.format(
-            bg_color="#FF5722", title="Taux insertion", value=f"{insertion_rate:.2f} %"),
-            unsafe_allow_html=True)
+# Ligne 2 avec 3 colonnes
+col4, col5, col6 = st.columns(3, gap="large")
 
-    with col5:
-        st.markdown(kpi_template.format(
-            bg_color="#9C27B0", title="Taux féminisation", value=f"{feminization_rate:.2f} %"),
-            unsafe_allow_html=True)
+with col4:
+    st.markdown(kpi_template.format(
+        bg_color="#FF5722", title="Taux d'insertion", value=f"{insertion_rate:.2f} %"),
+        unsafe_allow_html=True)
 
+with col5:
+    st.markdown(kpi_template.format(
+        bg_color="#9C27B0", title="Taux de féminisation", value=f"{feminization_rate:.2f} %"),
+        unsafe_allow_html=True)
 
-# with col6:
-#     st.markdown(kpi_template.format(
-#         bg_color="#E0E0E0", title="(Vide)", value="--"),
-#         unsafe_allow_html=True)
-
-# Aperçu des données
-st.subheader("Aperçu des données 📋")
-st.dataframe(df.head(), use_container_width=True)
+with col6:
+    st.markdown(kpi_template.format(
+        bg_color="#E0E0E0", title="(Vide)", value="--"),
+        unsafe_allow_html=True)
 
 
 # col1.metric("💰 Rémunération moyenne", f"{avg_salary:.2f} FCFA")
