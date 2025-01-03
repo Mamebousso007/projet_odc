@@ -59,7 +59,7 @@ df = preprocess_data(df)
 
 # Titre principal
 st.set_page_config(page_title="Dashboard Entreprise", layout="wide")
-st.subheader("📊 Suivi des étudiants ODC")
+st.subheader("📊 Suivi Insertion de la promotion 5")
 
 
 # Utiliser le thème dans vos visualisations
