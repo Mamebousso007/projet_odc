@@ -59,7 +59,7 @@ df = preprocess_data(df)
 
 # Titre principal
 st.set_page_config(page_title="Dashboard Entreprise", layout="wide")
-st.title("📊 Suivi des étudiants ODC")
+st.subheader("📊 Suivi des étudiants ODC")
 
 
 # Utiliser le thème dans vos visualisations
@@ -82,7 +82,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 
 
 
@@ -125,58 +124,6 @@ else:
     if search_input:
         st.error("Aucun étudiant trouvé.")
 
-# # Formulaire pour ajouter un nouvel apprenant
-# st.sidebar.header("Ajouter un apprenant")
-
-# # Saisie des informations de l'apprenant
-# with st.sidebar.form(key='add_student_form'):
-#     nom = st.text_input("Nom")
-#     prenom = st.text_input("Prénom")
-#     cni = st.text_input("Numéro CNI")
-#     entreprise = st.text_input("Entreprise")
-#     poste = st.text_input("Poste occupé")
-#     type_contrat = st.selectbox("Type de contrat", ["CDI", "CDD", "Stage", "Autre"])
-#     remuneration = st.number_input("Rémunération", min_value=0)
-#     duree_mois = st.number_input("Durée du contrat (en mois)", min_value=0)
-#     statut = st.selectbox("Statut actuel", ["En poste", "Non en poste"])
-#     sexe = st.selectbox("Sexe", ["Homme", "Femme"])
-
-#     # Bouton pour soumettre le formulaire
-#     submit_button = st.form_submit_button(label='Ajouter l\'apprenant')
-
-#     if submit_button:
-#         # Vérification des champs obligatoires
-#         if not nom or not prenom or not cni:
-#             st.error("Veuillez remplir les champs Nom, Prénom et CNI.")
-#         else:
-#             # Ajout des données à la base de données (DataFrame)
-#             new_student = {
-#                 'NOM': nom,
-#                 'PRENOM': prenom,
-#                 'NCIN': cni,
-#                 'ENTREPRISES': entreprise,
-#                 'INTITULEPOSTE': poste,
-#                 'TYPEDECONTRAT': type_contrat,
-#                 'REMUNERATION': remuneration,
-#                 'DUREEMOIS': duree_mois,
-#                 'STATUTACTUELenposteounon': 'OUI' if statut == "En poste" else 'NON',
-#                 'SEXE': sexe
-#             }
-
-#             # Convertir new_student en un DataFrame pour concaténation
-#             new_student_df = pd.DataFrame([new_student])
-
-#             # Utilisation de pd.concat pour ajouter la nouvelle ligne au DataFrame existant
-#             df = pd.concat([df, new_student_df], ignore_index=True)
-
-#             # Sauvegarde des données dans un fichier CSV
-#             df.to_csv("apprenants.csv", index=False)
-
-#             # Affichage d'un message de confirmation
-#             st.success(f"L'apprenant {nom} {prenom} a été ajouté avec succès.")
-            
-#             # Réinitialiser le formulaire après ajout
-#             st.rerun()
 
 # Ajout de filtres interactifs
 st.sidebar.header("Filtres interactifs")
@@ -221,135 +168,98 @@ if search_domain:
     filtered_data = filtered_data[filtered_data['DOMAINEFORMATION'].str.contains(search_domain, case=False, na=False)]
 
 
-# Calcul KPI 
-avg_salary = filtered_data['REMUNERATION'].mean() if 'REMUNERATION' in filtered_data.columns else 0
-total_students = len(filtered_data)
-active_students = len(filtered_data[filtered_data['STATUTACTUELenposteounon'] == 'OUI']) if 'STATUTACTUELenposteounon' in filtered_data.columns else 0
-insertion_rate = (active_students / total_students * 100) if total_students > 0 else 0
-# Calcul féminisation
-female_students = len(filtered_data[filtered_data['SEXE'] == 'F']) if 'SEXE' in filtered_data.columns else 0
-feminization_rate = (female_students / total_students * 100) if total_students > 0 else 0
+def kpi():
 
-# Template des KPI avec une taille uniforme et titres réduits
-kpi_template = """
-<div style="
-    background-color: {bg_color};
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    color: white;
-    font-size: 14px; /* Taille de texte réduite pour les titres */
-    font-weight: bold;
-    margin: 0 10px; /* Espacement horizontal */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    flex-grow: 1; /* Permet de garder une taille égale */
-    min-width: 180px; /* Largeur minimale */
-    min-height: 140px; /* Hauteur minimale */
-    height: 100%; /* Hauteur maximale pour ajustement */
-    flex-basis: 200px; /* Définit une taille de base flexible */
-    word-wrap: break-word;
-">
-    <div style="font-size: 12px; font-weight: normal; word-wrap: break-word; text-align: center;">{title}</div>
-    <div style="font-size: 24px; margin-top: 10px; text-align: center;">{value}</div>
-</div>
-"""
+    # Calcul KPI 
+    avg_salary = filtered_data['REMUNERATION'].mean() if 'REMUNERATION' in filtered_data.columns else 0
+    total_students = len(filtered_data)
+    active_students = len(filtered_data[filtered_data['STATUTACTUELenposteounon'] == 'OUI']) if 'STATUTACTUELenposteounon' in filtered_data.columns else 0
+    insertion_rate = (active_students / total_students * 100) if total_students > 0 else 0
+    # Calcul féminisation
+    female_students = len(filtered_data[filtered_data['SEXE'] == 'F']) if 'SEXE' in filtered_data.columns else 0
+    feminization_rate = (female_students / total_students * 100) if total_students > 0 else 0
 
-st.header("📌 Indicateurs clés")
-
-# Créer un container flexible
-with st.container():
-    # Utiliser des colonnes pour aligner les KPI horizontalement
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5 = st.columns(5, gap='small')
 
     with col1:
-        st.markdown(kpi_template.format(
-            bg_color="#4CAF50", title="Rémun. moy.", value=f"{avg_salary:.2f} "),
-            unsafe_allow_html=True)
+        st.info('Rémunération', icon="💰")
+        st.metric(label="Moyenne", value=f"{avg_salary:.2f}")
 
     with col2:
-        st.markdown(kpi_template.format(
-            bg_color="#2196F3", title="Total apprenants", value=total_students),
-            unsafe_allow_html=True)
+        st.info('Apprenants', icon="🧑‍🎓")
+        st.metric(label="Total", value=f"{total_students:,.0f}")
 
     with col3:
-        st.markdown(kpi_template.format(
-            bg_color="#FFC107", title="En poste", value=active_students),
-            unsafe_allow_html=True)
+        st.info('En poste', icon="💼")
+        st.metric(label="Total", value=f"{active_students:,.0f}")
 
     with col4:
-        st.markdown(kpi_template.format(
-            bg_color="#FF5722", title="Taux insertion", value=f"{insertion_rate:.2f} %"),
-            unsafe_allow_html=True)
+        st.info('Taux d insertion', icon="📊")
+        st.metric(label="Taux %", value=f"{insertion_rate:.2f} %")
 
     with col5:
-        st.markdown(kpi_template.format(
-            bg_color="#9C27B0", title="Taux féminisation", value=f"{feminization_rate:.2f} %"),
-            unsafe_allow_html=True)
+        st.info('Taux de féminisation', icon="👩")
+        st.metric(label="Taux %", value=f"{feminization_rate:.2f} %")
 
 
-# with col6:
-#     st.markdown(kpi_template.format(
-#         bg_color="#E0E0E0", title="(Vide)", value="--"),
-#         unsafe_allow_html=True)
+#kpi()
 
-# Aperçu des données
-st.subheader("Aperçu des données 📋")
-st.dataframe(df.head(), use_container_width=True)
+#st.subheader("Gestion des apprenants", divider='rainbow')
+if "show_form" not in st.session_state:
+    st.session_state.show_form = False
+    
+if st.button("Ajouter un nouvel apprenant"):
+    st.session_state.show_form = not st.session_state.show_form  # Basculer l'état
+
+if st.session_state.show_form:
+    st.write("## Formulaire d'ajout")
+    from add_data import *
+    add_data() 
+kpi()
 
 
-# col1.metric("💰 Rémunération moyenne", f"{avg_salary:.2f} FCFA")
-# col2.metric("👥 Nombre total d'apprenants", total_students)
-# col3.metric("✅ Apprenants en poste", active_students)
-# col4.metric("📊 Taux d'insertion", f"{insertion_rate:.2f} %")
-
-
-# # Affichage des données filtrées
-# st.subheader("Données filtrées 📋")
-# st.dataframe(filtered_data, use_container_width=True)
+st.divider()
 
 colo1, colo2 = st.columns(2, gap="large")
 with colo1:
     contract_count = filtered_data['TYPEDECONTRAT'].value_counts()
 
-
+    # Création du diagramme circulaire complet
     fig = go.Figure(data=[go.Pie(
         labels=contract_count.index,
         values=contract_count.values,
-        hole=0.3, 
-        marker=dict(colors=px.colors.qualitative.Set2, line=dict(color='white', width=2)),
-        textinfo='percent',
+        hole=0,  # Aucun trou pour un cercle complet
+        marker=dict(
+            colors=px.colors.qualitative.Set2, 
+            line=dict(color='white', width=2)
+        ),
+        textinfo='percent',  # Afficher les pourcentages et étiquettes
         insidetextorientation='radial',
         hoverinfo='label+percent+value'
     )])
 
+    # Mise en page pour séparer la légende
     fig.update_layout(
         title=dict(
             text="📈 Répartition des types de contrats",
-            font=dict(size=16, color="#cfe5f1", family="Arial"),
+            font=dict(size=18, color="#2c3e50", family="Arial"),
             x=0.5,
-            xanchor="center" 
+            xanchor="center"
         ),
-        annotations=[dict(
-            text="Contrats",
-            x=0.5, y=0.5, font_size=20, showarrow=False
-        )],
-        showlegend=True,
+        showlegend=True,  # Légende activée
         legend=dict(
-            orientation="h",
+            orientation="h",  # Légende horizontale
             yanchor="bottom",
-            y=-0.1,
+            y=-0.3,  # Positionnée sous le diagramme
             xanchor="center",
             x=0.5,
             font=dict(size=14)
-        )
-        
+        ),
+        margin=dict(t=50, b=100),  # Ajout de marges pour séparer
     )
 
-
-    st.plotly_chart(fig, use_container_width=True)
+    # Affichage dans Streamlit
+    st.plotly_chart(fig, use_container_width=True) 
 
 with colo2:
     #Durée Moyenne
@@ -362,6 +272,8 @@ with colo2:
         labels={'x': 'Type de contrat', 'y': 'Durée moyenne (mois)'}
     )
     st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
 
 colon1, colon2 = st.columns(2, gap='large')
 with colon1:
@@ -510,7 +422,6 @@ st.plotly_chart(fig, use_container_width=True)
 
 
 
-
 # Répartition des postes 
 st.subheader("Répartition des postes occupés ")
 post_count = filtered_data['INTITULEPOSTE'].value_counts().head(10)  
@@ -615,3 +526,6 @@ heatmap_data = filtered_data.pivot_table(
 #     st.warning("Les données de prise de service ne sont pas disponibles ou contiennent des valeurs manquantes.")
 
 
+# # Aperçu des données
+st.subheader("Aperçu des données 📋")
+st.dataframe(df.head(), use_container_width=True)
