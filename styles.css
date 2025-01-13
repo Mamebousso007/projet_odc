@@ -3,6 +3,10 @@ body {
     background-color: #000000 !important; /* Fond noir */
     color: #000000 !important;           /* Texte blanc */
 }
+[data-testid=metric-container] {
+    box-shadow: 0 0 4px #686664;
+    padding: 10px;
+}
 
 .css-18e3th9 { /* Conteneur principal Streamlit */
     background-color: #000000 !important; /* Fond noir */
