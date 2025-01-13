@@ -214,8 +214,13 @@ def kpi(filtered_data):
     col1, col2, col3, col4, col5 = st.columns(5, gap='small')
 
     # Configurer la localisation pour le formatage des nombres
-    locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
-    
+    #locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
+    try:
+        # Utilisez une locale compatible Windows
+        locale.setlocale(locale.LC_ALL, 'French_France.1252')
+    except locale.Error:
+        # Si la locale n'est pas supportée, afficher un message d'erreur
+        print("La locale spécifiée n'est pas supportée sur ce système.")
     with col1:
         st.info('Rémunération', icon="💰")
         avg_salary_formatted = locale.format_string("%.0f", avg_salary, grouping=True) if avg_salary > 0 else "N/A"

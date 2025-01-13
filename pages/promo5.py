@@ -239,7 +239,13 @@ def kpi():
     feminization_rate = (female_students / total_students * 100) if total_students > 0 else 0
 
     # Configuration de la localisation pour les nombres
-    locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
+    #locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
+    try:
+        # Utilisez une locale compatible Windows
+        locale.setlocale(locale.LC_ALL, 'French_France.1252')
+    except locale.Error:
+        # Si la locale n'est pas supportée, afficher un message d'erreur
+        print("La locale spécifiée n'est pas supportée sur ce système.")
 
     # Affichage des KPI avec des colonnes égales
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1], gap='small')
