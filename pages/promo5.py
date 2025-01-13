@@ -5,7 +5,7 @@ import plotly.io as pio
 import matplotlib as plt
 import locale
 import plotly.graph_objects as go
-from streamlit_option_menu import option_menu
+
 
 #rgement des données
 
