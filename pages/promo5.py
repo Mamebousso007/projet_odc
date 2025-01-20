@@ -12,37 +12,6 @@ import plotly.graph_objects as go
 df = pd.read_excel('SUIVI_GLOBAL_P5.xlsx', engine='openpyxl', skiprows=1)
 
 
-# def sideBar():
-#     with st.sidebar:
-#         selected = option_menu(
-#             menu_title="Main Menu",  # Titre du menu
-#             options=["Accueil", "Promo1", "Promo2"],  # Options du menu
-#             icons=["house", "star", "list-task"],  # Icônes associées
-#             menu_icon="cast",  # Icône principale
-#             default_index=0,  # Option sélectionnée par défaut
-#         )
-#     return selected
-
-# # Navigation principale
-# selected = sideBar()
-
-# if "page_loaded" not in st.session_state:
-#     # Indicateur pour savoir si la page d'accueil est déjà affichée
-#     st.session_state["page_loaded"] = True
-
-# # Afficher uniquement la page sélectionnée
-# if selected == "Accueil" and st.session_state["page_loaded"]:
-#     # Page d'accueil
-#     st.title("Bienvenue sur la page d'accueil")
-#     st.write("Ceci est la page par défaut de l'application. Naviguez via le menu latéral.")
-# elif selected == "Promo1":
-#     st.session_state["page_loaded"] = False  # Désactiver la page d'accueil
-#     promo1.app()  # Charger la page Promo1
-# elif selected == "Promo2":
-#     st.session_state["page_loaded"] = False  # Désactiver la page d'accueil
-#     promo2.app()  # Charger la page Promo2
-
-
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     # Suppression des caractères spéciaux dans les colonnes
     df.columns = df.columns.str.replace('[^a-zA-Z]', '', regex=True)
@@ -64,7 +33,6 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     for col in sensitive_columns:
         if col in df.columns:
             df[col] = df[col]
-
 
     columns_fixed = {
         'ADRESSE': 'Non spécifié',
@@ -90,17 +58,19 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
 df = preprocess_data(df)
 
 
-st.subheader("📊 Suivi Insertion de la promotion 5")
+st.subheader("📊 SUIVI INSERTION DE LA PROMOTION 5")
 
 
 # Utiliser le thème dans vos visualisations
 px.defaults.template = "plotly_dark"  
 
+import os
 
-with open("styles.css") as f:
+# Chemin relatif pour accéder à styles.css depuis le dossier pages
+css_path = os.path.join(os.path.dirname(__file__), "..", "styles.css")
+
+with open(css_path) as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
-
 
 
 st.markdown(
@@ -204,84 +174,145 @@ if selected_domains:
     filtered_data = filtered_data[filtered_data['DOMAINEFORMATION'].isin(selected_domains)]
 st.sidebar.image("data/logo.jpg",caption="")
 
-import streamlit as st
-import locale
 
+
+# def kpi():
+#     # CSS pour forcer les colonnes à avoir une largeur identique
+    
+#     # Calcul KPI 
+#     avg_salary = filtered_data['REMUNERATION'].mean() if 'REMUNERATION' in filtered_data.columns else 0
+#     total_students = len(filtered_data)
+#     active_students = len(filtered_data[filtered_data['STATUTACTUELenposteounon'] == 'OUI']) if 'STATUTACTUELenposteounon' in filtered_data.columns else 0
+#     insertion_rate = (active_students / total_students * 100) if total_students > 0 else 0
+#     # Calcul féminisation
+#     female_students = len(filtered_data[filtered_data['SEXE'] == 'F']) if 'SEXE' in filtered_data.columns else 0
+#     feminization_rate = (female_students / total_students * 100) if total_students > 0 else 0
+
+#     # Configuration de la localisation pour les nombres
+#     try:
+#         locale.setlocale(locale.LC_ALL, 'French_France.1252')
+#     except locale.Error:
+#         print("La locale spécifiée n'est pas supportée sur ce système.")
+
+#     # Affichage des KPI avec des colonnes égales
+#     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1], gap='small') 
+
+#     with col1:
+#         st.info('Rémunération', icon="💰")
+#         avg_salary_formatted = locale.format_string("%.1f", avg_salary, grouping=True)
+#         st.metric(label="Moyenne", value=f"{avg_salary_formatted} FCFA")
+
+#     with col2:
+#         st.info('Apprenants', icon="🧑‍🎓")
+#         st.metric(label="Total", value=f"{total_students:,.0f}")
+#     with col3:
+#         st.info('En poste', icon="💼")
+#         st.metric(label="Total", value=f"{active_students:,.0f}")
+#     with col4:
+#         st.info('Taux d’insertion', icon="📊")
+#         st.metric(label="Taux", value=f"{insertion_rate:.2f} %")
+#     with col5:
+#         st.info('Taux de féminisation', icon="👩")
+#         st.metric(label="Taux", value=f"{feminization_rate:.2f} %")
+# # Appliquer le CSS personnalisé
 def kpi():
     # CSS pour forcer les colonnes à avoir une largeur identique
     st.markdown(
         """
         <style>
-        .kpi-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 20%; /* Assurez une largeur égale pour toutes les colonnes */
-            margin: auto;
-            padding: 10px;
-        }
-        .stMetric {
-            text-align: center;
+        /* Styles pour les colonnes */
+        .stColumns > div {
+            width: 100% !important;
+            padding: 10px !important;
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    # Calcul KPI 
+     # Calcul des KPI 
     avg_salary = filtered_data['REMUNERATION'].mean() if 'REMUNERATION' in filtered_data.columns else 0
     total_students = len(filtered_data)
     active_students = len(filtered_data[filtered_data['STATUTACTUELenposteounon'] == 'OUI']) if 'STATUTACTUELenposteounon' in filtered_data.columns else 0
-    insertion_rate = (active_students / total_students * 100) if total_students > 0 else 0
-    # Calcul féminisation
+    # insertion_rate = (active_students / total_students * 100) if total_students > 0 else 0
+
+    # Calcul du nombre d'étudiants insérés basé sur la colonne 'STATUT'
+    inserted_students = len(filtered_data[filtered_data['STATUT'] == 'Inséré']) if 'STATUT' in filtered_data.columns else 0
+    insertion_rate = (inserted_students / total_students * 100) if total_students > 0 else 0
+
+    # Calcul du taux de féminisation
     female_students = len(filtered_data[filtered_data['SEXE'] == 'F']) if 'SEXE' in filtered_data.columns else 0
     feminization_rate = (female_students / total_students * 100) if total_students > 0 else 0
 
     # Configuration de la localisation pour les nombres
-    #locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
     try:
-        # Utilisez une locale compatible Windows
         locale.setlocale(locale.LC_ALL, 'French_France.1252')
     except locale.Error:
-        # Si la locale n'est pas supportée, afficher un message d'erreur
         print("La locale spécifiée n'est pas supportée sur ce système.")
 
-    # Affichage des KPI avec des colonnes égales
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1], gap='small')
+    # Template HTML/CSS pour les KPI
+    kpi_template = """
+    <div style="
+        background-color: {bg_color};
+        padding: 10px;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        width: 100%;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    ">
+        <div style="font-size: 20px; font-weight: normal;">{title}</div>
+        <div style="font-size: 36px; margin-top: 10px;">{value}</div>
+    </div>
+    """
+    # Première ligne avec 3 colonnes
+    col1, col2, col3 = st.columns(3, gap="large")
 
     with col1:
-        st.markdown('<div class="kpi-column">', unsafe_allow_html=True)
-        st.info('Rémunération', icon="💰")
-        avg_salary_formatted = locale.format_string("%.1f", avg_salary, grouping=True)
-        st.metric(label="Moyenne", value=f"{avg_salary_formatted} FCFA")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(kpi_template.format(
+            bg_color="#FF5722", title="Rémunération moyenne", value=f"{avg_salary:.2f} FCFA"),
+            unsafe_allow_html=True)
 
     with col2:
-        st.markdown('<div class="kpi-column">', unsafe_allow_html=True)
-        st.info('Apprenants', icon="🧑‍🎓")
-        st.metric(label="Total", value=f"{total_students:,.0f}")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(kpi_template.format(
+            bg_color="#2196F3", title="Nombre total d'apprenants", value=total_students),
+            unsafe_allow_html=True)
 
     with col3:
-        st.markdown('<div class="kpi-column">', unsafe_allow_html=True)
-        st.info('En poste', icon="💼")
-        st.metric(label="Total", value=f"{active_students:,.0f}")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(kpi_template.format(
+            bg_color="#FFC107", title="Apprenants en poste", value=inserted_students),
+            unsafe_allow_html=True)
+
+    # Deuxième ligne avec 3 colonnes
+    col4, col5, col6 = st.columns(3, gap="large")
 
     with col4:
-        st.markdown('<div class="kpi-column">', unsafe_allow_html=True)
-        st.info('Taux d’insertion', icon="📊")
-        st.metric(label="Taux", value=f"{insertion_rate:.2f} %")
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Définir la couleur en fonction du taux d'insertion
+        if insertion_rate < 50:
+            bg_color = "#FF5722"  # Rouge pour un taux inférieur à 50 %
+        else:
+            bg_color = "#4CAF50"  # Vert pour un taux supérieur ou égal à 50 %
+
+        # Afficher le KPI avec la couleur conditionnelle
+        st.markdown(kpi_template.format(
+            bg_color=bg_color, title="Taux d'insertion", value=f"{insertion_rate:.2f} %"),
+            unsafe_allow_html=True)
 
     with col5:
-        st.markdown('<div class="kpi-column">', unsafe_allow_html=True)
-        st.info('Taux de féminisation', icon="👩")
-        st.metric(label="Taux", value=f"{feminization_rate:.2f} %")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(kpi_template.format(
+            bg_color="#9C27B0", title="Taux de féminisation", value=f"{feminization_rate:.2f} %"),
+            unsafe_allow_html=True)
 
-#kpi()
+    with col6:
+        st.markdown(kpi_template.format(
+            bg_color="#E0E0E0", title="(Vide)", value="--"),
+            unsafe_allow_html=True)
 
 #st.subheader("Gestion des apprenants", divider='rainbow')
 if "show_form" not in st.session_state:

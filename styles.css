@@ -3,10 +3,6 @@ body {
     background-color: #000000 !important; /* Fond noir */
     color: #000000 !important;           /* Texte blanc */
 }
-[data-testid=metric-container] {
-    box-shadow: 0 0 4px #686664;
-    padding: 10px;
-}
 
 .css-18e3th9 { /* Conteneur principal Streamlit */
     background-color: #000000 !important; /* Fond noir */
@@ -15,9 +11,20 @@ body {
 
 
 
+/* Cibler les métriques (KPI) */
+div[data-testid="stMetric"] {
+    font-size: 50px !important;
+    color: #ffffff !important;
+}
 
-/* Bordures autour des visualisations */
-.css-1ht1j8u {
-    background-color: transparent !important; /* Fond transparent autour */
-    border: none !important;                  /* Pas de bordures supplémentaires */
+/* Cibler les labels des KPI */
+div[data-testid="stMetricLabel"] {
+    font-size: 50px !important;
+    color: #ffffff !important;
+}
+
+/* Cibler les conteneurs des visualisations */
+div[data-testid="stVerticalBlock"] {
+    background-color: transparent !important;
+    border: none !important;
 }
