@@ -6,5 +6,4 @@ secondaryBackgroundColor = "#63970"
 textColor = "#fff"
 font = "sans serif"  
 
-[runner]
-wideMode = true
+
