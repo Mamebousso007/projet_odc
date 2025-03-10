@@ -22,6 +22,7 @@ SCOPE = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis
 # SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1oNQc5xQO4bRj72v50po6Qg95jZzXp3VhBxyi7edx_ZY"
 credentials = Credentials.from_service_account_info(st.secrets["google"], scopes=SCOPE)
 
+
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1oNQc5xQO4bRj72v50po6Qg95jZzXp3VhBxyi7edx_ZY"
 
 # Modified to use a lower TTL and add a last_refreshed attribute
@@ -564,13 +565,13 @@ with colon1:
         ),
         xaxis=dict(
             title="Rémunération (FCFA)",
-            titlefont=dict(size=16, color="#333"),
+            title=dict(size=16, color="#333"),
             tickfont=dict(size=14),
             gridcolor="lightgrey"
         ),
         yaxis=dict(
             title="Nombre d'apprenants",
-            titlefont=dict(size=16, color="#333"),
+            title=dict(size=16, color="#333"),
             tickfont=dict(size=14),
             gridcolor="lightgrey"
         ),
@@ -673,7 +674,7 @@ with colon2:
                 ),
                 xaxis=dict(
                     title="Mois et Année",
-                    titlefont=dict(size=16, color="#333"),
+                    title=dict(size=16, color="#333"),
                     tickangle=45,
                     tickfont=dict(size=12),
                     # Forcer l'ordre des catégories
@@ -682,7 +683,7 @@ with colon2:
                 ),
                 yaxis=dict(
                     title="Nombre d'apprenants",
-                    titlefont=dict(size=16, color="#333"),
+                    title=dict(size=16, color="#333"),
                     tickfont=dict(size=14),
                     tickformat='d',
                     gridcolor="lightgrey"
@@ -830,14 +831,14 @@ fig.update_layout(
     ),
     xaxis=dict(
         title="Entreprise",
-        titlefont=dict(size=16, color="#333"),
+        title=dict(size=16, color="#333"),
         tickfont=dict(size=14),
         tickangle=-45,  
         gridcolor="lightgrey"
     ),
     yaxis=dict(
         title="Nombre d'apprenants insérés",
-        titlefont=dict(size=16, color="#333"),
+        title=dict(size=16, color="#333"),
         tickfont=dict(size=14),
         gridcolor="lightgrey"
     ),
@@ -1108,13 +1109,13 @@ st.plotly_chart(fig, use_container_width=True)
 #                     ),
 #                     xaxis=dict(
 #                         title="Rémunération (FCFA)",  
-#                         titlefont=dict(size=16, color="#333"),  
+#                         title=dict(size=16, color="#333"),  
 #                         tickfont=dict(size=14),
 #                         gridcolor="lightgrey"  
 #                     ),
 #                     yaxis=dict(
 #                         title="Nombre d'apprenants",  
-#                         titlefont=dict(size=16, color="#333"),  
+#                         title=dict(size=16, color="#333"),  
 #                         tickfont=dict(size=14),  
 #                         gridcolor="lightgrey"  
 #                     ),
