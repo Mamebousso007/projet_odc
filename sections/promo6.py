@@ -22,7 +22,6 @@ SCOPE = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis
 # SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1oNQc5xQO4bRj72v50po6Qg95jZzXp3VhBxyi7edx_ZY"
 credentials = Credentials.from_service_account_info(st.secrets["google"], scopes=SCOPE)
 
-#SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/your_spreadsheet_id/edit#gid=0"
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1oNQc5xQO4bRj72v50po6Qg95jZzXp3VhBxyi7edx_ZY"
 
 # Modified to use a lower TTL and add a last_refreshed attribute
