@@ -7,6 +7,8 @@ import gspread
 from google.oauth2.service_account import Credentials
 import os
 import sys
+from google.oauth2 import service_account
+
 
 
 def error_callback():
@@ -16,20 +18,21 @@ def error_callback():
 
 
 SCOPE = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-SERVICE_ACCOUNT_FILE = "eighth-jigsaw-446022-r0-638d8f86d788.json"
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1oNQc5xQO4bRj72v50po6Qg95jZzXp3VhBxyi7edx_ZY"
+# SERVICE_ACCOUNT_FILE = "eighth-jigsaw-446022-r0-638d8f86d788.json"
+# SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1oNQc5xQO4bRj72v50po6Qg95jZzXp3VhBxyi7edx_ZY"
+credentials = Credentials.from_service_account_info(st.secrets["google"], scopes=SCOPE)
 
+#SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/your_spreadsheet_id/edit#gid=0"
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1oNQc5xQO4bRj72v50po6Qg95jZzXp3VhBxyi7edx_ZY"
 
 # Modified to use a lower TTL and add a last_refreshed attribute
 @st.cache_data(ttl=30)  
 def charger_donnees():
     try:
-        credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPE)
         client = gspread.authorize(credentials)
         sheet = client.open_by_url(SPREADSHEET_URL).worksheet("GLOBAL")
-
         data = sheet.get_all_records(head=3)
-
+        
         if not data:
             st.warning("Aucune donnée trouvée dans la feuille Google Sheets.")
             return pd.DataFrame()
@@ -39,8 +42,7 @@ def charger_donnees():
     except Exception as e:
         st.error(f"❌ Erreur lors du chargement des données : {e}")
         return pd.DataFrame()
-
-
+    
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
@@ -90,8 +92,9 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
 # Fonction pour ajouter un nouvel étudiant
 def add_student(new_data):
     try:
-        # Charger les identifiants et se connecter à Google Sheets
-        credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPE)
+        # Charger les identifiants depuis st.secrets et se connecter à Google Sheets
+        credentials = Credentials.from_service_account_info(st.secrets["google"], scopes=SCOPE)
+        
         client = gspread.authorize(credentials)
         sheet = client.open_by_url(SPREADSHEET_URL).worksheet("GLOBAL")
         
@@ -105,7 +108,7 @@ def add_student(new_data):
     except Exception as e:
         st.error(f"Erreur lors de l'ajout de l'étudiant: {e}")
         return False
-
+    
 # Fonction pour le formulaire d'ajout d'étudiant
 def add_data():
     with st.form("new_student_form"):
