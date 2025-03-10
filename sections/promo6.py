@@ -564,14 +564,12 @@ with colon1:
             xanchor="center"  # Centrer le titre
         ),
         xaxis=dict(
-            title="Rémunération (FCFA)",
-            titlefont=dict(size=16, color="#333"),
+            title=dict(text="Rémunération (FCFA)", font=dict(size=16, color="#333")),
             tickfont=dict(size=14),
             gridcolor="lightgrey"
         ),
         yaxis=dict(
-            title="Nombre d'apprenants",
-            titlefont=dict(size=16, color="#333"),
+            title=dict(text="Nombre d'apprenants", font=dict(size=16, color="#333")),
             tickfont=dict(size=14),
             gridcolor="lightgrey"
         ),
@@ -673,8 +671,7 @@ with colon2:
                     xanchor="center"
                 ),
                 xaxis=dict(
-                    title="Mois et Année",
-                    titlefont=dict(size=16, color="#333"),
+                    title=dict(text="Mois et Année", font=dict(size=16, color="#333")),
                     tickangle=45,
                     tickfont=dict(size=12),
                     # Forcer l'ordre des catégories
@@ -682,8 +679,7 @@ with colon2:
                     categoryarray=evolution_data['MONTH_YEAR_FR'].tolist()
                 ),
                 yaxis=dict(
-                    title="Nombre d'apprenants",
-                    titlefont=dict(size=16, color="#333"),
+                    title=dict(text="Nombre d'apprenants", font=dict(size=16, color="#333")),
                     tickfont=dict(size=14),
                     tickformat='d',
                     gridcolor="lightgrey"
@@ -830,15 +826,13 @@ fig.update_layout(
         xanchor="center"
     ),
     xaxis=dict(
-        title="Entreprise",
-        titlefont=dict(size=16, color="#333"),
+        title=dict(text="Entreprise", font=dict(size=16, color="#333")),
         tickfont=dict(size=14),
         tickangle=-45,  
         gridcolor="lightgrey"
     ),
     yaxis=dict(
-        title="Nombre d'apprenants insérés",
-        titlefont=dict(size=16, color="#333"),
+        title=dict(text="Nombre d'apprenants insérés", font=dict(size=16, color="#333")),
         tickfont=dict(size=14),
         gridcolor="lightgrey"
     ),
