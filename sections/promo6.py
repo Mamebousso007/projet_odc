@@ -267,11 +267,10 @@ def kpi(filtered_data):
     with col4:
         # Définir la couleur en fonction du taux d'insertion
         if insertion_rate < 50:
-            bg_color = "#FF5722"  # Rouge pour un taux inférieur à 50 %
+            bg_color = "#FF5722"  
         else:
-            bg_color = "#4CAF50"  # Vert pour un taux supérieur ou égal à 50 %
+            bg_color = "#4CAF50"  
 
-        # Afficher le KPI avec la couleur conditionnelle
         st.markdown(kpi_template.format(
             bg_color=bg_color, title="Taux d'insertion", value=f"{insertion_rate:.2f} %"),
             unsafe_allow_html=True)

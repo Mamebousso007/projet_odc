@@ -6,4 +6,6 @@ Mako
 Markdown
 notebook
 matplotlib
+gspread
+google-auth
 
