@@ -251,40 +251,6 @@ st.markdown(
 
 # Barre de recherche d'étudiant
 #st.sidebar.header("Rechercher un étudiant")
-search_input = st.sidebar.text_input("Entrez le numéro de téléphone ou l'e-mail :")
-
-
-filtered_student = df[
-    (df['NDETELEPHONE'].astype(str).str.contains(search_input, case=False, na=False)) |
-    (df['EMAIL'].str.contains(search_input, case=False, na=False))
-]
-
-# Affichage des résultats
-if search_input and not filtered_student.empty:
-    st.subheader("Informations")
-    student_data = filtered_student.iloc[0]  
-
-    st.markdown(
-        f"""
-        <div style="background-color: #cfe5f1; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
-            <h4 style="color: #001728;"><center>{student_data['NOM']} {student_data['PRENOM']}</center></h4>
-            <ul style="color: #001728;">
-                <li><strong>Numéro de Téléphone :</strong> {student_data.get('NDETELEPHONE', 'Non spécifié')}</li>
-                <li><strong>E-mail :</strong> {student_data.get('EMAIL', 'Non spécifié')}</li>
-                <li><strong>Poste occupé :</strong> {student_data.get('INTITULEPOSTE', 'Non spécifié')}</li>
-                <li><strong>Entreprise :</strong> {student_data.get('ENTREPRISES', 'Non spécifiée')}</li>
-                <li><strong>Type de contrat :</strong> {student_data.get('TYPEDECONTRAT', 'Non spécifié')}</li>
-                <li><strong>Rémunération :</strong> {student_data.get('REMUNERATION', 'Non spécifiée')} FCFA</li>
-                <li><strong>Durée du contrat :</strong> {student_data.get('DUREEMOIS', 'Non spécifiée')} Mois</li>
-                <li><strong>Statut actuel :</strong> {'En poste' if student_data['STATUTACTUELenposteounon'] == 'OUI' else 'Non en poste'}</li>
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-else:
-    if search_input:
-        st.error("Aucun étudiant trouvé.")
 
 
 col1, col2, col3, col4, col5 = st.columns(5)
@@ -499,7 +465,6 @@ colo1, colo2, colo3 = st.columns(3, gap="large")
 with colo1:
     contract_count = filtered_data['TYPEDECONTRAT'].value_counts()
 
-    # Création du diagramme circulaire complet
     fig = go.Figure(data=[go.Pie(
         labels=contract_count.index,
         values=contract_count.values,
@@ -513,7 +478,6 @@ with colo1:
         hoverinfo='label+percent+value'
     )])
 
-    # Mise en page pour séparer la légende
     fig.update_layout(
         title=dict(
             text="📈 Répartition des types de contrats",
@@ -522,7 +486,8 @@ with colo1:
             xanchor="center"
         ),
         showlegend=True, 
-        height=400, width=600, 
+        height=400, 
+        width=700, 
         legend=dict(
             orientation="h",  
             yanchor="bottom",
@@ -531,28 +496,40 @@ with colo1:
             x=0.5,
             font=dict(size=14)
         ),
-        margin=dict(t=50, b=100),  
+        margin=dict(t=50, b=100, l=50, r=50),  
     )
 
-    
     st.plotly_chart(fig, use_container_width=True) 
 
 with colo2:
-    #Durée Moyenne
     contract_duration = filtered_data.groupby('TYPEDECONTRAT')['DUREEMOIS'].mean().sort_values()
     fig = px.bar(
         contract_duration,
         x=contract_duration.index,
         y=contract_duration.values,
-        title="Durée moyenne des contrats par type",
-        labels={'x': 'Type de contrat', 'y': 'Durée moyenne (mois)'}
+        title="📈 Durée moyenne des contrats par type",
+        labels={'x': '', 'y': 'Durée moyenne (mois)'}
     )
     fig.update_layout(
-        title=dict(x=0.5, font=dict(size=14), xanchor="center" ),
-        
-        height=500, width=500,  # 🔹 Uniformisation
-        xaxis=dict(tickfont=dict(size=12)),
-        yaxis=dict(tickfont=dict(size=12)),
+        title=dict(
+            text="📈 Durée moyenne des contrats par type",
+            font=dict(size=14, color="white", family="Arial"),
+            x=0.5, 
+            xanchor="center"
+        ),
+        height=500, 
+        width=700,  
+        xaxis=dict(
+            showgrid=False,
+            tickangle=-45,
+            tickfont=dict(size=12)
+        ),
+        yaxis=dict(
+            showgrid=False,
+            title="Durée moyenne (mois)",
+            gridcolor="lightgrey"
+        ),
+        margin=dict(l=50, r=50, t=50, b=50)
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -561,8 +538,8 @@ with colo3:
         filtered_data,
         x='REMUNERATION',
         nbins=20,  
-        title="Distribution des rémunérations ",
-        labels={'REMUNERATION': 'Rémunération (FCFA)'},
+        title="📈 Distribution des rémunérations",
+        labels={'REMUNERATION': 'Rémunération (FCFA)', 'count': "Nombre d'apprenants"},
         color_discrete_sequence=['#FF7F0E'],  
         text_auto=True
     )
@@ -573,47 +550,57 @@ with colo3:
         opacity=0.9  
     )
 
-    # Personnalisation du layout
     fig.update_layout(
         title=dict(
-            text="📈 Distribution des rémunérations ",
+            text="📈 Distribution des rémunérations",
             font=dict(size=14, color="white", family="Arial"), 
             x=0.5,  
             xanchor="center" 
         ),
         xaxis=dict(
             title="Rémunération (FCFA)",  
-            titlefont=dict(size=14, color="#333"),  
-            tickfont=dict(size=14),
-            gridcolor="lightgrey"  
+            showgrid=False,
+            tickfont=dict(size=12)
         ),
         yaxis=dict(
             title="Nombre d'apprenants",  
-            titlefont=dict(size=16, color="#333"),  
-            tickfont=dict(size=14),  
-            gridcolor="lightgrey"  
+            showgrid=False,
+            gridcolor="lightgrey"
         ),
-        plot_bgcolor="white", 
-        bargap=0.1, 
-        height=400, width=500,
+        height=400, 
+        width=700,
+        margin=dict(l=50, r=50, t=50, b=50),
+        bargap=0.1
     )
 
-    # Affichage du graphique
     st.plotly_chart(fig, use_container_width=True)
-
-
 st.divider()
 
+# CSS pour uniformiser les styles
+st.markdown(
+    """
+    <style>
+        .title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Création des colonnes avec espacement
 colon1, colon2, colon3 = st.columns(3, gap='large')
+
 with colon1:
-        
-    # Répartition des postes 
-    post_count = filtered_data['INTITULEPOSTE'].value_counts().head(10)  
+    st.markdown('<p class="title">Top 10 des postes occupés</p>', unsafe_allow_html=True)
+
+    post_count = filtered_data['INTITULEPOSTE'].value_counts().head(10)
     fig = px.bar(
         post_count, 
         x=post_count.index, 
         y=post_count.values, 
-        title="Top 10 des postes occupés ", 
         labels={'x': 'Postes', 'y': 'Nombre'},
         color=post_count.values, 
         color_continuous_scale='Viridis',
@@ -621,26 +608,22 @@ with colon1:
     )
 
     fig.update_layout(
-        height = 500,
-        width = 500
-
+        height=400,
+        width=500
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    company_count = filtered_data['ENTREPRISES'].value_counts()
-
-
-  
 with colon2:
-    #st.subheader("📈 Évolution temporelle des apprenants en poste")
+    st.markdown('<p class="title">Évolution insertion au fil du temps</p>', unsafe_allow_html=True)
+
     if 'DATEDEPRISEDESERVICE' in filtered_data.columns:
         time_data = filtered_data[filtered_data['DATEDEPRISEDESERVICE'].notna()]
         time_data = time_data[time_data['STATUTACTUELenposteounon'] == 'OUI']
-        
+
         time_data['MONTH_YEAR'] = time_data['DATEDEPRISEDESERVICE'].dt.to_period('M')
         evolution_data = time_data.groupby('MONTH_YEAR').size().reset_index(name='Nombre')
         evolution_data['MONTH_YEAR'] = pd.to_datetime(evolution_data['MONTH_YEAR'].astype(str))
-        
+
         try:
             locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8') 
         except locale.Error:
@@ -648,11 +631,8 @@ with colon2:
                 locale.setlocale(locale.LC_TIME, 'fra')  
             except locale.Error:
                 st.warning("Impossible de configurer la locale en français. Les mois resteront en anglais.")
-        
 
-        evolution_data['MONTH_YEAR_FR'] = evolution_data['MONTH_YEAR'].dt.strftime('%B %Y')
-        evolution_data['MONTH_YEAR_FR'] = evolution_data['MONTH_YEAR_FR'].str.capitalize()  # Capitaliser la première lettre
-        
+        evolution_data['MONTH_YEAR_FR'] = evolution_data['MONTH_YEAR'].dt.strftime('%B %Y').str.capitalize()
 
         evolution_data = evolution_data.sort_values('MONTH_YEAR')
 
@@ -660,8 +640,7 @@ with colon2:
             evolution_data, 
             x='MONTH_YEAR_FR', 
             y='Nombre', 
-            title="Évolution insertion au fil du temps",
-            labels={'MONTH_YEAR_FR': 'Mois et Année', 'Nombre': 'Nombre d\'apprenants'},
+            labels={'MONTH_YEAR_FR': 'Mois et Année', 'Nombre': "Nombre d'apprenants"},
             markers=True
         )
         
@@ -671,9 +650,9 @@ with colon2:
             xaxis=dict(tickangle=45),
             xaxis_title="Mois et Année",
             yaxis_title="Nombre d'apprenants",
-            yaxis=dict(tickformat='d'), 
-            height = 500,
-            width = 500
+            yaxis=dict(tickformat='d'),
+            height=400,
+            width=500
         )
         
         st.plotly_chart(fig, use_container_width=True)
@@ -681,60 +660,13 @@ with colon2:
         st.warning("La colonne `DATEDEPRISEDESERVICE` n'est pas disponible ou contient uniquement des valeurs manquantes.")
 
 with colon3:
-    
-    fig = px.bar(
-        x=company_count.index,
-        y=company_count.values,
-        title="Nombre d'étudiants par entreprise",
-        labels={'x': 'Entreprise', 'y': 'Nombre d\'étudiants'},
-        text=company_count.values,  
-        color_discrete_sequence=px.colors.sequential.Viridis 
-    )
-
-    fig.update_traces(
-        marker_line_color='white',  
-        marker_line_width=1.5,  
-        opacity=0.9,  
-        textposition="outside"  
-    )
+    st.markdown('<p class="title">Données filtrées</p>', unsafe_allow_html=True)
+    st.dataframe(filtered_data, height=400, width=700)
 
 
-    fig.update_layout(
-        title=dict(
-            text="📈Nombre d'étudiants par entreprise",
-            font=dict(size=14, color="white", family="Arial"),
-            x=0.5,  
-            xanchor="center"
-        ),
-        xaxis=dict(
-            title="Entreprise",
-            titlefont=dict(size=16, color="black"),
-            tickfont=dict(size=14),
-            tickangle=-45,  
-            gridcolor="lightgrey"
-        ),
-        yaxis=dict(
-            title="Nombre d'étudiants",
-            titlefont=dict(size=16, color="#333"),
-            tickfont=dict(size=14),
-            gridcolor="lightgrey"
-        ),
-        plot_bgcolor="white",  
-        bargap=0.15,
-        height = 600,
-        width = 800
-    )
-
-
-    st.plotly_chart(fig, use_container_width=True)
-
-
-
-
-
+st.divider()
 
 print(df.columns)
-
 
 
 heatmap_data = filtered_data.pivot_table(
@@ -745,7 +677,54 @@ heatmap_data = filtered_data.pivot_table(
     fill_value=0
 )
 
+# 📌 Disposer les éléments sur la même ligne
+col1, col2 = st.columns([1, 1])  # Ajuste les proportions si nécessaire
 
+col1, col2 = st.columns(2)
+
+with col1:
+    # 🔽 Slider pour définir le seuil
+    seuil = st.slider("", min_value=1, max_value=20, value=2)
+
+if 'ENTREPRISES' in filtered_data.columns:
+    structure_count = filtered_data['ENTREPRISES'].value_counts()
+
+    # Séparer les entreprises principales et secondaires
+    principales = structure_count[structure_count >= seuil]
+    secondaires = structure_count[structure_count < seuil]
+
+    with col1:
+        # 📈 Graphique des principales entreprises
+        if not principales.empty:
+            fig = px.bar(
+                x=principales.index,
+                y=principales.values,
+                title=f"Principales entreprises (≥ {seuil} bénéficiaires)",
+                labels={'x': 'Structure', 'y': 'Nombre de bénéficiaires insérés'},
+                text=principales.values
+            )
+            fig.update_traces(marker_color="#FF6600", textposition='outside')
+            st.plotly_chart(fig, use_container_width=True)  # Largeur ajustée
+
+    with col2:
+        # 📜 Tableau téléchargeable pour les entreprises secondaires
+        if not secondaires.empty:
+            df_secondaires = pd.DataFrame({
+                'Entreprise': secondaires.index,
+                'Nombre de bénéficiaires': secondaires.values
+            }).sort_values('Nombre de bénéficiaires', ascending=False)
+
+            st.dataframe(df_secondaires, use_container_width=True, height=500)  # Largeur ajustée
+
+            # 📂 Bouton de téléchargement
+            # csv = df_secondaires.to_csv(index=False).encode('utf-8')
+            # st.download_button(
+            #     label="📥 Télécharger le tableau",
+            #     data=csv,
+            #     file_name="entreprises_secondaires.csv",
+            #     mime="text/csv"
+            # )
+
+else:
+    st.error("❌ La colonne 'ENTREPRISES' est absente des données filtrées.")
 st.divider()
-st.subheader("Aperçus des données filtrées")
-st.dataframe(filtered_data.head())

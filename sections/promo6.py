@@ -1033,7 +1033,7 @@ if search_input:
 
 
 
-st.sidebar.image("data/logo.jpg", caption="")
+#st.sidebar.image("data/logo.jpg", caption="")
 #st.subheader("Gestion des apprenants", divider='rainbow')
 # if "show_form" not in st.session_state:
 #     st.session_state.show_form = False
@@ -1135,17 +1135,13 @@ st.divider()
 #colon1, colon2, colon3 = st.columns(3, gap='large')
 colon1, colon2, colon3 = st.columns([1, 1, 1], gap='large')
 
-
 with colon1:
     if 'DATEDEPRISEDESERVICE' in filtered_data.columns:
         filtered_data = filtered_data.dropna(subset=['DATEDEPRISEDESERVICE'])
         
-        # Nous ne modifions pas ici le format des dates car c'est déjà fait dans preprocess_data()
-        # Si besoin, on peut ajouter une vérification supplémentaire
         if filtered_data['DATEDEPRISEDESERVICE'].dtype != 'datetime64[ns]':
             st.warning("La colonne DATEDEPRISEDESERVICE n'est pas au format datetime. Vérifiez le prétraitement.")
             
-            # Tentative de conversion au cas où
             filtered_data['DATEDEPRISEDESERVICE'] = pd.to_datetime(
                 filtered_data['DATEDEPRISEDESERVICE'], 
                 errors='coerce'
@@ -1191,7 +1187,7 @@ with colon1:
             fig.update_layout(
                 title=dict(
                     text="📈 Évolution des apprenants insérés",
-                    font=dict(size=16, color="white", family="Arial"),
+                    font=dict(size=14, color="white", family="Arial"),
                     x=0.5,
                     xanchor="center"
                 ),
@@ -1211,7 +1207,8 @@ with colon1:
                     gridcolor="lightgrey"
                 ),
                 height=500,
-                width=700
+                width=700,
+                margin=dict(l=50, r=50, t=50, b=50)  # Ajout de marges uniformes
             )
 
             st.plotly_chart(fig, use_container_width=True)
@@ -1221,74 +1218,69 @@ with colon1:
         st.warning("La colonne `DATEDEPRISEDESERVICE` n'est pas disponible.")
 
 with colon2:
-
     filtered_data_inseres = filtered_data[filtered_data['STATUT'] == 'INSERE']
-
-        # Répartition des postes
     filtered_data_inseres = filtered_data_inseres[filtered_data_inseres['INTITULEPOSTE'].notna()]
-
 
     post_count = filtered_data_inseres['INTITULEPOSTE'].value_counts().head(10)
 
-        # Créer le graphique
     fig = px.bar(
-            post_count, 
-            x=post_count.index, 
-            y=post_count.values, 
-    
-            labels={'x': 'Postes', 'y': 'Nombre'},
-            color=post_count.values, 
-            color_continuous_scale='Viridis',
-            text=post_count.values  
-        )
+        post_count, 
+        x=post_count.index, 
+        y=post_count.values, 
+        labels={'x': 'Postes', 'y': 'Nombre'},
+        color=post_count.values, 
+        color_continuous_scale='Viridis',
+        text=post_count.values  
+    )
 
-        # Personnalisation du layout pour les postes
     fig.update_layout(
-            title=dict(
-                
-                text="📈 Top 10 des postes occupés ",
-                font=dict(size=14, color="white", family="Arial"),
-                x=0.5,  
-                xanchor="center"
-            ),
-            xaxis=dict(
-                showgrid = False,
-                title="Postes",
-                tickangle=-45,
-                tickfont=dict(size=12)
-            ),
-            yaxis=dict(
-                showgrid = False,
-                title="Nombre d'apprenants insérés",
-                gridcolor="lightgrey"
-            ),
+        title=dict(
+            text="📈 Top 10 des postes occupés",
+            font=dict(size=14, color="white", family="Arial"),
+            x=0.5,  
+            xanchor="center"
+        ),
+        xaxis=dict(
+            showgrid=False,
+            title="",
+            tickangle=-45,
+            tickfont=dict(size=12)
+        ),
+        yaxis=dict(
+            showgrid=False,
+            title="Nombre d'apprenants insérés",
+            gridcolor="lightgrey"
+        ),
+        bargap=0.2,
+        height=500,
+        width=700,
+        margin=dict(l=50, r=50, t=50, b=50)  # Ajout de marges uniformes
+    )
 
-            bargap=0.2,
-            height=500,
-            width=700
-        )
-
-        # Personnalisation des barres et des textes
     fig.update_traces(
-            textposition="outside",  
-            textfont=dict(color="white", size=14),  
-            hovertemplate="<b>Poste occupé:</b> %{x}<br><b>Nombre:</b> %{y}<extra></extra>"
-        )
+        textposition="outside",  
+        textfont=dict(color="white", size=14),  
+        hovertemplate="<b>Poste occupé:</b> %{x}<br><b>Nombre:</b> %{y}<extra></extra>"
+    )
 
-        # Afficher le graphique
     st.plotly_chart(fig, use_container_width=True)
 
-
-  # Définition du seuil (fixe ou interactif)
-
 with colon3:
-    st.subheader("Données filtrées")
-    st.dataframe(filtered_data)
-    height=500,
-    width=700
-
-
+    st.markdown(
+    """
+    <style>
+    .centered-title {
+        text-align: center;
+        font-size: 14px;
+    }
+    </style>
+    <h6>Données filtrées</h6>
+    """,
+    unsafe_allow_html=True
+    )
+    st.dataframe(filtered_data, height=350, width=700)
 st.divider()
+
 # 📌 Disposer les éléments sur la même ligne
 col1, col2 = st.columns([1, 1])  # Ajuste les proportions si nécessaire
 
