@@ -10,6 +10,167 @@ import sys
 from google.oauth2 import service_account
 
 
+st.set_page_config(
+    page_title="Dashboard Suivi Insertion - Sonatel Academy",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+st.markdown("""
+<style>
+    /* Couleurs principales */
+    :root {
+        --primary: #FF6B00;
+        --secondary: #001F3F;
+        --accent: #4CAF50;
+        --background: #f5f5f5;
+        --text: #333333;
+    }
+    
+    /* En-tête et styles généraux */
+    .main-header {
+        background-color: var(--secondary);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .header-title {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .header-subtitle {
+        font-size: 1.2rem;
+        margin-top: 0.5rem;
+        color: white;
+    }
+    
+    /* KPI cards */
+    .kpi-card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        transition: transform 0.3s;
+        height: 100%;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .kpi-title {
+        color: var(--text);
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .kpi-value {
+        color: var(--primary);
+        font-size: 1.8rem;
+        font-weight: bold;
+    }
+    
+    .kpi-unit {
+        color: var(--text);
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+    
+    /* Filtres */
+    .filter-container {
+        background-color: white;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-title {
+        color: var(--secondary);
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background-color: white;
+        border-radius: 5px 5px 0 0;
+        padding: 10px 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: var(--primary);
+        color: white;
+    }
+    
+    /* Graphiques */
+    .chart-container {
+        background-color: white;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        height: 100%;
+    }
+    
+    /* Upload section */
+    .upload-container {
+        background-color: #f8f9fa;
+        border: 2px dashed #ddd;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    
+    .upload-container:hover {
+        border-color: var(--primary);
+    }
+    
+    /* Tables */
+    .dataframe-container {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Boutons */
+    .stButton>button {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
+        font-weight: bold;
+    }
+    
+    .stButton>button:hover {
+        background-color: #FF8C00;
+    }
+    
+    /* Ajustements divers */
+    div[data-testid="stVerticalBlock"] > div:has(.stTabs) {
+        gap: 0 !important;
+    }
+    
+    /* Masquer hamburger menu et footer */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 
 def error_callback():
     _, exc, tb = sys.exc_info()
@@ -23,10 +184,21 @@ SCOPE = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis
 credentials = Credentials.from_service_account_info(st.secrets["google"], scopes=SCOPE)
 
 #SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/your_spreadsheet_id/edit#gid=0"
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1oNQc5xQO4bRj72v50po6Qg95jZzXp3VhBxyi7edx_ZY"
+#SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1oNQc5xQO4bRj72v50po6Qg95jZzXp3VhBxyi7edx_ZY"
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1T-EWMgcFa74OrLFFlFL_eyoQpRDLtoDMeYNyocDBdZg"
 
 # Modified to use a lower TTL and add a last_refreshed attribute
-@st.cache_data(ttl=30)  
+@st.cache_data(ttl=5) 
+def load_data_from_excel(uploaded_file, promo_name):
+    try:
+        df = pd.read_excel(uploaded_file)
+        df = preprocess_data(df)
+        st.session_state.promos_data[promo_name] = df
+        st.session_state.current_promo = promo_name
+        return True
+    except Exception as e:
+        st.error(f"Erreur lors du chargement du fichier: {e}")
+        return False 
 def charger_donnees():
     try:
         client = gspread.authorize(credentials)
@@ -48,6 +220,11 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
         return df
         
     try:
+        # Filtrage des domaines HACKEUSE et AWS
+        if 'DOMAINEFORMATION' in df.columns:
+            df['DOMAINEFORMATION'] = df['DOMAINEFORMATION'].astype(str).str.strip().str.upper()
+            df = df[~df['DOMAINEFORMATION'].isin(['HACKEUSE', 'AWS'])]
+        
         # Suppression des caractères spéciaux dans les noms de colonnes
         df.columns = df.columns.str.replace(r'[^a-zA-Z]', '', regex=True)
 
@@ -56,11 +233,59 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
         for col in columns_str:
             df[col] = df[col].astype(str)
 
+        # Fonction pour traiter les dates au format texte français
+        def preprocess_date(date_val):
+            if pd.isna(date_val):
+                return date_val
+                
+            # Convertir en chaîne si ce n'est pas déjà le cas
+            date_str = str(date_val)
+            
+            # Dictionnaire de conversion des mois en français vers des nombres
+            mois_fr_to_num = {
+                'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04',
+                'mai': '05', 'juin': '06', 'juillet': '07', 'août': '08',
+                'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
+            }
+            
+            # Convertir le mois en texte en nombre
+            date_parts = date_str.lower().split()
+            if len(date_parts) == 3:
+                try:
+                    jour = date_parts[0].zfill(2)
+                    mois = mois_fr_to_num.get(date_parts[1], '01')
+                    annee = date_parts[2]
+                    return f"{jour}/{mois}/{annee}"
+                except:
+                    return date_str
+            
+            return date_str
+
         # Colonnes à convertir en dates
         columns_date = {'DATEDENAISSANCE', 'DATEDEPRISEDESERVICE'} & set(df.columns)
         for col in columns_date:
-            df[col] = pd.to_datetime(df[col], errors='coerce')
-            df[col] = df[col].fillna(pd.NaT)  # Optionnel : Remplacer NaT par une autre valeur
+            # Prétraiter les dates au format texte français
+            df[f"{col}_TEMP"] = df[col].apply(preprocess_date)
+            
+            # Essayer différents formats de date
+            df[col] = pd.to_datetime(df[f"{col}_TEMP"], format='%d/%m/%Y', errors='coerce')
+            
+            # Si certaines dates n'ont pas été converties, essayer d'autres formats
+            if df[col].isna().any():
+                mask_nat = df[col].isna()
+                try:
+                    # Format JJ/MM/YY
+                    temp_dates = pd.to_datetime(df.loc[mask_nat, f"{col}_TEMP"], format='%d/%m/%y', errors='coerce')
+                    df.loc[mask_nat, col] = temp_dates
+                except:
+                    pass
+            
+            # Supprimer la colonne temporaire
+            df = df.drop(f"{col}_TEMP", axis=1, errors='ignore')
+            
+            # Appliquer la correction d'année si nécessaire
+            df[col] = df[col].apply(lambda x: correct_year(x) if not pd.isna(x) else x)
+            df[col] = df[col].fillna(pd.NaT)
 
         # Colonnes sensibles (ne pas remplacer les valeurs manquantes)
         sensitive_columns = {
@@ -88,6 +313,16 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     except Exception as e:
         st.error(f"❌ Erreur lors du prétraitement des données : {e}")
         return df  # Retour du DataFrame original en cas d'erreur
+
+
+# Fonction pour corriger les années incorrectes
+def correct_year(date):
+    """Corrige les années incorrectes (ex: 25 devient 2025 au lieu de 1925)"""
+    if pd.isna(date):
+        return date
+    if date.year < 2000:
+        return date.replace(year=date.year + 100)
+    return date
 
 # Fonction pour ajouter un nouvel étudiant
 def add_student(new_data):
@@ -185,14 +420,19 @@ def kpi(filtered_data):
         st.warning("Aucune donnée disponible pour afficher les KPI.")
         return
         
-    # CSS pour forcer les colonnes à avoir une largeur identique
+    # CSS pour les colonnes et les cartes KPI
     st.markdown(
         """
         <style>
         /* Styles pour les colonnes */
         .stColumns > div {
             width: 100% !important;
-            padding: 10px !important;
+            padding: 5px !important;
+        }
+        
+        /* Styles supplémentaires pour les cartes KPI */
+        .compact-kpi {
+            margin-bottom: 10px !important;
         }
         </style>
         """,
@@ -225,80 +465,443 @@ def kpi(filtered_data):
         except locale.Error:
             print("La locale spécifiée n'est pas supportée sur ce système.")
 
-    # Template HTML/CSS pour les KPI
+    # Template HTML/CSS pour les KPI (version compacte)
     kpi_template = """
-    <div style="
+    <div class="compact-kpi" style="
         background-color: {bg_color};
-        padding: 10px;
-        border-radius: 10px;
+        padding: 8px;
+        border-radius: 8px;
         text-align: center;
         color: white;
-        font-size: 20px;
         font-weight: bold;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         width: 100%;
-        height: 200px;
+        height: 110px;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     ">
-        <div style="font-size: 20px; font-weight: normal;">{title}</div>
-        <div style="font-size: 36px; margin-top: 10px;">{value}</div>
+        <div style="font-size: 14px; font-weight: normal; margin-bottom: 5px;">{title}</div>
+        <div style="font-size: 24px; margin-top: 5px;">{value}</div>
     </div>
     """
-    # Première ligne avec 3 colonnes
-    col1, col2, col3 = st.columns(3, gap="large")
+    
+    # Disposition en deux lignes avec 3 colonnes chacune
+    # Première ligne avec 3 KPIs
+    # Disposition en une seule ligne avec 6 colonnes
+    col1, col2, col3, col4, col5 = st.columns(5, gap="small")
+
     with col1:
-        # Formater avg_salary avec 2 décimales avant de le convertir en chaîne
         avg_salary_formatted = locale.format_string("%.2f", avg_salary, grouping=True)
         st.markdown(kpi_template.format(
-            bg_color="#FF5722", title="Rémunération moyenne", value=f"{avg_salary_formatted} FCFA"),
+            bg_color="#F39200", title="Rémunération moyenne", value=f"{avg_salary_formatted} FCFA"),
             unsafe_allow_html=True)
-        
+
     with col2:
         st.markdown(kpi_template.format(
-            bg_color="#2196F3", title="Nombre total d'apprenants", value=total_students),
+            bg_color="#005F83", title="Apprenants Suivi", value=total_students),
             unsafe_allow_html=True)
 
     with col3:
         st.markdown(kpi_template.format(
-            bg_color="#FFC107", title="Apprenants en poste", value=inserted_students),
+            bg_color="#00843D", title="Apprenants Inséré", value=inserted_students),
             unsafe_allow_html=True)
 
-    # Deuxième ligne avec 3 colonnes
-    col4, col5, col6 = st.columns(3, gap="large")
     with col4:
-        # Définir la couleur en fonction du taux d'insertion
-        if insertion_rate < 50:
-            bg_color = "#FF5722"  
-        else:
-            bg_color = "#4CAF50"  
-
+        bg_color = "#00843D" if insertion_rate < 50 else "#4CAF50"
         st.markdown(kpi_template.format(
             bg_color=bg_color, title="Taux d'insertion", value=f"{insertion_rate:.2f} %"),
             unsafe_allow_html=True)
 
     with col5:
         st.markdown(kpi_template.format(
-            bg_color="#9C27B0", title="Taux de féminisation", value=f"{feminization_rate:.2f} %"),
+            bg_color="#F39200", title="Taux de féminisation", value=f"{feminization_rate:.2f} %"),
             unsafe_allow_html=True)
 
-    with col6:
-        st.markdown(kpi_template.format(
-            bg_color="#E0E0E0", title="(Vide)", value="--"),
-            unsafe_allow_html=True)
-        
+    # with col6:
+    #     active_rate = (active_students / total_students * 100) if total_students > 0 else 0
+    #     st.markdown(kpi_template.format(
+    #         bg_color="#F39200", title="Taux en poste", value=f"{active_rate:.2f} %"),
+    #         unsafe_allow_html=True)
+
 # Main application 
-st.subheader("📊 SUIVI INSERTION DE LA PROMOTION 6")
+#st.subheader("📊 SUIVI INSERTION DE LA PROMOTION 6")
 px.defaults.template = "plotly_dark"
+# En-tête du Dashboard
+st.markdown('<div class="main-header"><h1 class="header-title">SUIVI INSERTION DE LA PROMOTION 6</h1><p class="header-subtitle">École du Code - Sonatel Academy</p></div>', unsafe_allow_html=True)
 
-# refresh button
-if st.button("🔄 Rafraîchir"):
-    st.cache_data.clear()
+
+# # refresh button
+# if st.button("🔄 Rafraîchir"):
+#     st.cache_data.clear()
 
 # Load data
 df = charger_donnees()
 df = preprocess_data(df)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 df = df.convert_dtypes()
 # print(df.dtypes)
 # print(df.head())  
@@ -311,6 +914,16 @@ with open("styles.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 print(df.columns)
+# Conversion des types de données
+df = df.convert_dtypes()
+
+
+if 'DOMAINEFORMATION' in df.columns:
+    # Normaliser les valeurs de la colonne DOMAINEFORMATION
+    df['DOMAINEFORMATION'] = df['DOMAINEFORMATION'].astype(str).str.strip().str.upper()
+    
+    # Filtrer les domaines exclus
+    df = df[~df['DOMAINEFORMATION'].isin(['HACKEUSE', 'AWS'])]
 
 st.markdown(
     """
@@ -324,76 +937,49 @@ st.markdown(
 )
 
 
-# Barre de recherche d'étudiant
-st.sidebar.header("Rechercher un étudiant")
-search_input = st.sidebar.text_input("Entrez le numéro de téléphone ou l'e-mail :")
+# Section de filtres sur la page principale
+    #st.markdown('<div class="filter-container"><p class="filter-title">Filtres</p>', unsafe_allow_html=True)
 
-# Vérifier si une recherche est effectuée
-if search_input:
-    filtered_students = df[
-        (df['NDETELEPHONE'].astype(str).str.contains(search_input, case=False, na=False)) |
-        (df['EMAIL'].str.contains(search_input, case=False, na=False))
-    ]
+    # Organisation des filtres sur une seule ligne
+col1, col2, col3, col4, col5 = st.columns(5)
 
-    # Affichage des résultats
-    if not filtered_students.empty:
-        st.subheader("Informations Apprenant")
+with col1:
+    search_input = st.text_input("🔍 Rechercher", placeholder="Téléphone ou email")
 
-        # Parcourir les étudiants trouvés et afficher leurs informations
-        for _, student_data in filtered_students.iterrows():
-            student_data = student_data.fillna("Non spécifié")
+with col2:
+    selected_domains = st.multiselect(
+            "🎓 Domaine", 
+            options=df['DOMAINEFORMATION'].dropna().unique().tolist(),
+            default=[]
+        )
 
-            st.markdown(
-                f"""
-                <div style="background-color: #cfe5f1; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
-                    <h4 style="color: #001728;"><center>{student_data['NOM']} {student_data['PRENOM']}</center></h4>
-                    <ul style="color: #001728;">
-                        <li><strong>Numéro de Téléphone :</strong> {student_data['NDETELEPHONE']}</li>
-                        <li><strong>E-mail :</strong> {student_data['EMAIL']}</li>
-                        <li><strong>Poste occupé :</strong> {student_data['INTITULEPOSTE']}</li>
-                        <li><strong>Entreprise :</strong> {student_data['ENTREPRISES']}</li>
-                        <li><strong>Type de contrat :</strong> {student_data['TYPEDECONTRAT']}</li>
-                        <li><strong>Rémunération :</strong> {student_data['REMUNERATION']} FCFA</li>
-                        <li><strong>Durée du contrat :</strong> {student_data['DUREEMOIS']} Mois</li>
-                        <li><strong>Statut actuel :</strong> {'En poste' if student_data['STATUTACTUELenposteounon'] == 'OUI' else 'Non en poste'}</li>
-                    </ul>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-    else:
-        st.error("Aucun étudiant trouvé.")
+with col3:
+    selected_contracts = st.multiselect(
+            "📜 Contrat", 
+            options=df['TYPEDECONTRAT'].dropna().unique().tolist(),
+            default=[]
+        )
 
-# filtres 
-st.sidebar.header("Filtres interactifs")
+with col4:
+    selected_companies = st.multiselect(
+            "🏢 Entreprise", 
+            options=df['ENTREPRISES'].dropna().unique().tolist(),
+            default=[]
+        )
 
+with col5:
+    selected_statuses = st.multiselect(
+            "🟢 Statut", 
+            options=["En poste", "Non en poste"],
+            default=[]
+        )
 
-selected_domains = st.sidebar.multiselect(
-    "Filtrer par domaine de formation", 
-    options=df['DOMAINEFORMATION'].dropna().unique().tolist(),
-    default=[]
-)
+    # Bouton pour appliquer les filtres
+st.markdown("<br>", unsafe_allow_html=True)  # Espacement
+    # if st.button("✅ Appliquer les filtres"):
+    #     st.success("Filtres appliqués avec succès!")
 
-selected_companies = st.sidebar.multiselect(
-    "Filtrer par entreprise", 
-    options=df['ENTREPRISES'].dropna().unique().tolist(),
-    default=[]
-)
-
-
-selected_statuses = st.sidebar.multiselect(
-    "Filtrer par statut", 
-    options=["En poste", "Non en poste"],
-    default=[]
-)
-
-
-selected_contracts = st.sidebar.multiselect(
-    "Filtrer par type de contrat", 
-    options=df['TYPEDECONTRAT'].dropna().unique().tolist(),
-    default=[]
-)
-
+    # Application des filtres
 filtered_data = df.copy()
 
 if selected_domains:
@@ -406,776 +992,351 @@ if selected_statuses:
     status_values = ["OUI" if status == "En poste" else "NON" for status in selected_statuses]
     filtered_data = filtered_data[filtered_data['STATUTACTUELenposteounon'].isin(status_values)]
 
-
 if selected_contracts:
     filtered_data = filtered_data[filtered_data['TYPEDECONTRAT'].isin(selected_contracts)]
 
-# st.write("Résultats filtrés :")
-# st.dataframe(filtered_data)
+    # Recherche par téléphone ou email
+if search_input:
+    filtered_students = filtered_data[
+            (filtered_data['NDETELEPHONE'].astype(str).str.contains(search_input, case=False, na=False)) |
+            (filtered_data['EMAIL'].str.contains(search_input, case=False, na=False))
+        ]
 
-st.sidebar.image("data/logo.jpg", caption="Logo de l'organisation")
+        # Affichage des résultats de recherche
+    if not filtered_students.empty:
+        st.subheader("📌 Informations Apprenant")
+
+            # Parcourir les étudiants trouvés et afficher leurs informations
+        for _, student_data in filtered_students.iterrows():
+            student_data = student_data.fillna("Non spécifié")
+
+            st.markdown(
+                    f"""
+                    <div style="background-color: #cfe5f1; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
+                        <h4 style="color: #001728;"><center>{student_data['NOM']} {student_data['PRENOM']}</center></h4>
+                        <ul style="color: #001728;">
+                            <li><strong>📞 Téléphone :</strong> {student_data['NDETELEPHONE']}</li>
+                            <li><strong>📧 E-mail :</strong> {student_data['EMAIL']}</li>
+                            <li><strong>💼 Poste :</strong> {student_data['INTITULEPOSTE']}</li>
+                            <li><strong>🏢 Entreprise :</strong> {student_data['ENTREPRISES']}</li>
+                            <li><strong>📜 Type de contrat :</strong> {student_data['TYPEDECONTRAT']}</li>
+                            <li><strong>💰 Rémunération :</strong> {student_data['REMUNERATION']} FCFA</li>
+                            <li><strong>⏳ Durée du contrat :</strong> {student_data['DUREEMOIS']} Mois</li>
+                            <li><strong>🟢 Statut :</strong> {'En poste' if student_data['STATUTACTUELenposteounon'] == 'OUI' else 'Non en poste'}</li>
+                        </ul>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+    elif search_input:
+        st.warning("⚠️ Aucun étudiant trouvé avec ces critères de recherche.")
+
+
+
+st.sidebar.image("data/logo.jpg", caption="")
 #st.subheader("Gestion des apprenants", divider='rainbow')
-if "show_form" not in st.session_state:
-    st.session_state.show_form = False
+# if "show_form" not in st.session_state:
+#     st.session_state.show_form = False
     
-if st.button("➕"):
-    st.session_state.show_form = not st.session_state.show_form  # Basculer l'état
+# if st.button("➕"):
+#     st.session_state.show_form = not st.session_state.show_form  # Basculer l'état
 
-if st.session_state.show_form:
-    st.write("## Formulaire d'ajout")
-    add_data() 
+# if st.session_state.show_form:
+#     st.write("## Formulaire d'ajout")
+#     add_data() 
 
 kpi(filtered_data)
 
 
 st.divider()
 
-# st.markdown(
-#     """
-#     <hr style="height: 4px; background: linear-gradient(90deg, #FF7F0E, #1F77B4); border: none; border-radius: 2px; margin: 20px 0;">
-#     """,
-#     unsafe_allow_html=True,
-# )
+colo1, colo2, colo3 = st.columns(3, gap="large")
 
-st.subheader("Aperçus des données filtrées")
-st.dataframe(filtered_data.head())
-st.divider()
-colo1, colo2 = st.columns(2, gap="large")
+# 🔹 Graphe 1 : Répartition des types de contrats
 with colo1:
-
     filtered_data['TYPEDECONTRAT'] = filtered_data['TYPEDECONTRAT'].fillna('Sans emploi')
-
     filtered_data.loc[filtered_data['TYPEDECONTRAT'] == '', 'TYPEDECONTRAT'] = 'Sans emploi'
-
     contract_count = filtered_data['TYPEDECONTRAT'].value_counts()
 
-    fig = go.Figure(data=[go.Pie(
+    fig1 = go.Figure(data=[go.Pie(
         labels=contract_count.index,
         values=contract_count.values,
-        hole=0,  
-        marker=dict(
-            colors=px.colors.qualitative.Set2, 
-            line=dict(color='white', width=2)
-        ),
-        textinfo='percent',  
-        insidetextorientation='radial',
+        hole=0.3,  # Ajout d'un trou pour un meilleur rendu
+        marker=dict(colors=px.colors.qualitative.Set2, line=dict(color='white', width=2)),
+        textinfo='percent',
         hoverinfo='label+percent+value'
     )])
 
-
-    fig.update_layout(
-        title=dict(
-            text="📈 Répartition des types de contrats",
-            font=dict(size=18, color="#2c3e50", family="Arial"),
-            x=0.5,
-            xanchor="center"
+    fig1.update_layout(
+         title=dict(
+            text="📊 Répartition des types de contrats",
+            font=dict(size=14, color="white", family="Arial"),
+            x=0.5,  
+            xanchor="center" 
         ),
-        showlegend=True,  
-        legend=dict(
-            orientation="h",  
-            yanchor="bottom",
-            y=-0.3,  
-            xanchor="center",
-            x=0.5,
-            font=dict(size=14)
-        ),
-        margin=dict(t=50, b=100),  
+        showlegend=True,
+        legend=dict(orientation="h", y=-0.3, x=0.5),
+        height=400, width=600  
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig1, use_container_width=True)
 
-# Add a second chart in the second column
-# with colo2:
-#     if 'SEXE' in filtered_data.columns:
-#         gender_data = filtered_data['SEXE'].value_counts().reset_index()
-#         gender_data.columns = ['Sexe', 'Nombre']
-        
-#         # Map 'F' and 'M' to more descriptive labels
-#         gender_map = {'F': 'Femmes', 'M': 'Hommes'}
-#         gender_data['Sexe'] = gender_data['Sexe'].map(gender_map)
-        
-#         fig_gender = px.bar(
-#             gender_data, 
-#             x='Sexe', 
-#             y='Nombre',
-#             color='Sexe',
-#             color_discrete_map={'Femmes': '#E91E63', 'Hommes': '#2196F3'},
-#             title="Répartition par genre"
-#         )
-        
-#         fig_gender.update_layout(
-#             title=dict(
-#                 text="👥 Répartition par genre",
-#                 font=dict(size=18, color="#2c3e50", family="Arial"),
-#                 x=0.5,
-#                 xanchor="center"
-#             ),
-#             xaxis_title="",
-#             yaxis_title="Nombre d'apprenants",
-#             showlegend=True
-#         )
-        
-#         st.plotly_chart(fig_gender, use_container_width=True)
-
+# 🔹 Graphe 2 : Durée moyenne des contrats
 with colo2:
-    #Durée Moyenne
     contract_duration = filtered_data.groupby('TYPEDECONTRAT')['DUREEMOIS'].mean().sort_values()
-    fig = px.bar(
-        contract_duration,
-        x=contract_duration.index,
-        y=contract_duration.values,
-        title="Durée moyenne des contrats par type",
-        labels={'x': 'Type de contrat', 'y': 'Durée moyenne (mois)'}
+    
+    fig2 = px.bar(
+        x=contract_duration.index, y=contract_duration.values,
+        title="📅 Durée moyenne des contrats",
+        labels={'x': 'Type de contrat', 'y': 'Durée (mois)'},
+        color_discrete_sequence=['#00843D']
     )
-    st.plotly_chart(fig, use_container_width=True)
+    
+    fig2.update_layout(
+        
+        title=dict(x=0.5, font=dict(size=14), xanchor="center" ),
+        
+        height=400, width=500,  # 🔹 Uniformisation
+        xaxis=dict(tickfont=dict(size=12)),
+        yaxis=dict(tickfont=dict(size=12)),
+        #plot_bgcolor="white"
+    )
+
+    st.plotly_chart(fig2, use_container_width=True)
+
+# 🔹 Graphe 3 : Distribution des rémunérations
+with colo3:
+    filtered_data_inseres = filtered_data[filtered_data['REMUNERATION'].notna() & (filtered_data['REMUNERATION'] > 0)]
+
+    fig3 = px.histogram(
+        filtered_data_inseres, x='REMUNERATION', nbins=8,
+        title="💰 Distribution des rémunérations",
+        labels={'REMUNERATION': 'Rémunération (FCFA)'},
+        color_discrete_sequence=['#FF7F0E']
+    )
+
+    fig3.update_traces(marker_line_color='white', marker_line_width=1.5, opacity=0.9)
+
+    fig3.update_layout(
+        title=dict(x=0.5, font=dict(size=14), xanchor="center" ),
+        height=400, width=500,  # 🔹 Alignement
+        xaxis=dict(tickfont=dict(size=12)),
+        yaxis=dict(tickfont=dict(size=12)),
+        #plot_bgcolor="white",
+        bargap=0.2
+    )
+
+    st.plotly_chart(fig3, use_container_width=True)
+
+
 
 st.divider()
 
-colon1, colon2 = st.columns(2, gap='large')
+#colon1, colon2, colon3 = st.columns(3, gap='large')
+colon1, colon2, colon3 = st.columns([1, 1, 1], gap='large')
 
-filtered_data_inseres = filtered_data[filtered_data['REMUNERATION'].notna() & (filtered_data['REMUNERATION'] > 0)]
 
 with colon1:
-    # Création de l'histogramme des rémunérations des apprenants insérés
-    # Réduire le nombre de bins pour des barres plus larges
-    fig = px.histogram(
-        filtered_data_inseres,
-        x='REMUNERATION',
-        nbins=8,  
-        title="Distribution des rémunérations",
-        labels={'REMUNERATION': 'Rémunération (FCFA)'},
-        color_discrete_sequence=['#FF7F0E'],
-        text_auto=True
-    )
-    
-    fig.update_traces(
-        marker_line_color='white',
-        marker_line_width=1.5,
-        opacity=0.9,
-        marker=dict(line=dict(width=2))  # Augmenter la largeur de la bordure des barres
-    )
-    
-    # Personnalisation du layout
-    fig.update_layout(
-        title=dict(
-            text="📈 Distribution des rémunérations",
-            font=dict(size=14, color="#333", family="Arial"),
-            x=0.5,
-            xanchor="center"  # Centrer le titre
-        ),
-        xaxis=dict(
-            title=dict(text="Rémunération (FCFA)", font=dict(size=16, color="#333")),
-            tickfont=dict(size=14),
-            gridcolor="lightgrey"
-        ),
-        yaxis=dict(
-            title=dict(text="Nombre d'apprenants", font=dict(size=16, color="#333")),
-            tickfont=dict(size=14),
-            gridcolor="lightgrey"
-        ),
-        plot_bgcolor="white",
-        bargap=0.1,  # Ajuster cette valeur pour contrôler l'espacement entre les barres
-    )
-    
-    # Affichage du graphique
-    st.plotly_chart(fig, use_container_width=True)
-
-with colon2:
     if 'DATEDEPRISEDESERVICE' in filtered_data.columns:
-        # Filtrer les données avant la conversion pour éliminer les lignes problématiques
-        filtered_data = filtered_data[~filtered_data['DATEDEPRISEDESERVICE'].isna()]
+        filtered_data = filtered_data.dropna(subset=['DATEDEPRISEDESERVICE'])
         
-        # Vérifier le format de date réel
-        sample_date = filtered_data['DATEDEPRISEDESERVICE'].iloc[0] if len(filtered_data) > 0 else None
-        
-        # Convertir la colonne de date avec le format DD/MM/YY
-        try:
+        # Nous ne modifions pas ici le format des dates car c'est déjà fait dans preprocess_data()
+        # Si besoin, on peut ajouter une vérification supplémentaire
+        if filtered_data['DATEDEPRISEDESERVICE'].dtype != 'datetime64[ns]':
+            st.warning("La colonne DATEDEPRISEDESERVICE n'est pas au format datetime. Vérifiez le prétraitement.")
+            
+            # Tentative de conversion au cas où
             filtered_data['DATEDEPRISEDESERVICE'] = pd.to_datetime(
                 filtered_data['DATEDEPRISEDESERVICE'], 
-                format='%d/%m/%y',  # Format "02/09/24"
                 errors='coerce'
             )
-        except Exception as e:
-            st.warning(f"Erreur lors de la conversion des dates: {e}")
-            # Essayer un format alternatif
-            try:
-                filtered_data['DATEDEPRISEDESERVICE'] = pd.to_datetime(
-                    filtered_data['DATEDEPRISEDESERVICE'], 
-                    errors='coerce'
-                )
-            except:
-                st.error("Impossible de convertir les dates.")
         
-        # Filtrer les dates invalides
-        filtered_data = filtered_data[filtered_data['DATEDEPRISEDESERVICE'].notna()]
-        
-        # Vérifier les dates futures
-        today = pd.Timestamp.now()
-        filtered_data = filtered_data[filtered_data['DATEDEPRISEDESERVICE'] <= today]
-        
-        # Filtrer les données pour ne garder que les apprenants insérés
-        time_data = filtered_data[filtered_data['STATUT'] == 'INSERE']
-        
-        if len(time_data) > 0:
-            # Créer une période mensuelle
+        time_data = filtered_data[filtered_data['STATUT'] == 'INSERE'].copy()
+
+        if not time_data.empty:
             time_data['MONTH_YEAR'] = time_data['DATEDEPRISEDESERVICE'].dt.to_period('M')
-            
-            # Compter le nombre d'apprenants par mois
+            time_data = time_data.drop_duplicates(subset=['DATEDEPRISEDESERVICE', 'STATUT'])
             evolution_data = time_data.groupby('MONTH_YEAR').size().reset_index(name='Nombre')
-            
-            # Convertir en datetime pour l'affichage
-            evolution_data['MONTH_YEAR'] = pd.to_datetime(evolution_data['MONTH_YEAR'].astype(str))
-            
-            # Créer un libellé en français
+            evolution_data['MONTH_YEAR'] = evolution_data['MONTH_YEAR'].dt.to_timestamp()
+
             try:
                 locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8')
             except:
                 try:
-                    locale.setlocale(locale.LC_TIME, 'fra')
+                    locale.setlocale(locale.LC_TIME, 'fr_FR')
                 except:
                     pass
-                    
-            evolution_data['MONTH_YEAR_FR'] = evolution_data['MONTH_YEAR'].dt.strftime('%B %Y')
-            evolution_data['MONTH_YEAR_FR'] = evolution_data['MONTH_YEAR_FR'].str.capitalize()
-            
-            # Trier par ordre chronologique
+
+            evolution_data['MONTH_YEAR_FR'] = evolution_data['MONTH_YEAR'].dt.strftime('%B %Y').str.capitalize()
+            today = pd.Timestamp.today()
+            evolution_data = evolution_data[evolution_data['MONTH_YEAR'] <= today]
             evolution_data = evolution_data.sort_values('MONTH_YEAR')
-            
-            # Créer le graphique
+
             fig = px.line(
                 evolution_data,
                 x='MONTH_YEAR_FR',
                 y='Nombre',
-                title="Évolution des apprenants insérés au fil du temps",
-                labels={'MONTH_YEAR_FR': 'Mois et Année', 'Nombre': 'Nombre d\'apprenants'},
+                title="📈 Évolution des apprenants insérés",
+                labels={'MONTH_YEAR_FR': 'Mois et Année', 'Nombre': "Nombre d'apprenants"},
                 markers=True,
-                color_discrete_sequence=['#1E90FF']
+                color_discrete_sequence=['#00843D']  # Couleur verte
             )
-            
-            # Ajouter les valeurs sur chaque point avec texte noir
+
             fig.update_traces(
-                text=evolution_data['Nombre'], 
-                textposition='top center',
-                textfont=dict(color='black', size=14, family="Arial Bold"),  # Texte noir et plus gras
-                mode='lines+markers+text',
+                mode='lines+markers',
                 line=dict(width=3),
-                marker=dict(size=10)
+                marker=dict(size=8)
             )
-            
-            # Personnaliser la mise en page
+
             fig.update_layout(
                 title=dict(
                     text="📈 Évolution des apprenants insérés",
-                    font=dict(size=14, color="#333", family="Arial"),
+                    font=dict(size=16, color="white", family="Arial"),
                     x=0.5,
                     xanchor="center"
                 ),
                 xaxis=dict(
-                    title=dict(text="Mois et Année", font=dict(size=16, color="#333")),
+                    showgrid=False,
+                    title=dict(text="Mois et Année", font=dict(size=14, color="#333")),
                     tickangle=45,
                     tickfont=dict(size=12),
-                    # Forcer l'ordre des catégories
                     categoryorder='array',
                     categoryarray=evolution_data['MONTH_YEAR_FR'].tolist()
                 ),
                 yaxis=dict(
-                    title=dict(text="Nombre d'apprenants", font=dict(size=16, color="#333")),
+                    showgrid=False,
+                    title=dict(text="Nombre d'apprenants", font=dict(size=14, color="white")),
                     tickfont=dict(size=14),
                     tickformat='d',
                     gridcolor="lightgrey"
                 ),
-                plot_bgcolor="white",
-                height=500
+                height=500,
+                width=700
             )
-            
-            # Afficher le graphique
+
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("Aucune donnée valide trouvée après filtrage des dates.")
     else:
         st.warning("La colonne `DATEDEPRISEDESERVICE` n'est pas disponible.")
-# Filtrer uniquement les apprenants insérés
-# Filtrer uniquement les apprenants insérés
-filtered_data_inseres = filtered_data[filtered_data['STATUT'] == 'INSERE']
 
-# Comptage des bénéficiaires insérés par structure
-structure_count = filtered_data_inseres['ENTREPRISES'].value_counts()
+with colon2:
 
-# Créer le graphique à barres
-fig = px.bar(
-    x=structure_count.index, 
-    y=structure_count.values, 
-    title="Répartition des bénéficiaires insérés par structure", 
-    labels={'x': 'Structure', 'y': 'Nombre de bénéficiaires insérés'},
-    text=structure_count,  
-)
+    filtered_data_inseres = filtered_data[filtered_data['STATUT'] == 'INSERE']
 
-# Personnalisation des traces
-fig.update_traces(
-    marker_color=px.colors.qualitative.Vivid,  # Palette de couleurs vibrantes
-    textposition='outside',  # Position du texte à l'extérieur des barres
-    textfont=dict(color='black', size=14, family="Arial Bold"),  # Texte en noir et en gras
-    hovertemplate="<b>Structure:</b> %{x}<br><b>Nombre de bénéficiaires:</b> %{y}<extra></extra>"
-)
-
-# Personnalisation du layout
-fig.update_layout(
-    title=dict(
-        text="📈 Répartition des bénéficiaires insérés par structure",
-        font=dict(size=24, color="#333", family="Arial"),
-        x=0.5,  
-        xanchor="center" 
-    ),
-    xaxis=dict(
-        title="Structure",
-        tickangle=45,  # Angle des étiquettes pour éviter le chevauchement
-        tickfont=dict(size=12)
-    ),
-    yaxis=dict(
-        title="Nombre de bénéficiaires insérés",
-        gridcolor="lightgrey",
-        range=[0, structure_count.values.max() * 1.2],  # Ajouter un peu d'espace au-dessus de la barre la plus haute
-    ),
-    plot_bgcolor="white", 
-    bargap=0.2,  # Espacement entre les barres
-)
-
-# Afficher le graphique dans Streamlit
-st.plotly_chart(fig, use_container_width=True)
+        # Répartition des postes
+    filtered_data_inseres = filtered_data_inseres[filtered_data_inseres['INTITULEPOSTE'].notna()]
 
 
+    post_count = filtered_data_inseres['INTITULEPOSTE'].value_counts().head(10)
 
+        # Créer le graphique
+    fig = px.bar(
+            post_count, 
+            x=post_count.index, 
+            y=post_count.values, 
+    
+            labels={'x': 'Postes', 'y': 'Nombre'},
+            color=post_count.values, 
+            color_continuous_scale='Viridis',
+            text=post_count.values  
+        )
 
-
-filtered_data_inseres = filtered_data[filtered_data['STATUT'] == 'INSERE']
-
-# Répartition des postes
-filtered_data_inseres = filtered_data_inseres[filtered_data_inseres['INTITULEPOSTE'].notna()]
-
-
-post_count = filtered_data_inseres['INTITULEPOSTE'].value_counts().head(10)
-
-# Créer le graphique
-fig = px.bar(
-    post_count, 
-    x=post_count.index, 
-    y=post_count.values, 
-    title="Top 10 des postes occupés par les apprenants insérés", 
-    labels={'x': 'Postes', 'y': 'Nombre'},
-    color=post_count.values, 
-    color_continuous_scale='Viridis',
-    text=post_count.values  
-)
-
-# Personnalisation du layout pour les postes
-fig.update_layout(
-    title=dict(
-        text="📈 Top 10 des postes occupés par les apprenants insérés",
-        font=dict(size=24, color="#333", family="Arial"),
-        x=0.5,  
-        xanchor="center"
-    ),
-    xaxis=dict(
-        title="Postes",
-        tickangle=-45,
-        tickfont=dict(size=12)
-    ),
-    yaxis=dict(
-        title="Nombre d'apprenants insérés",
-        gridcolor="lightgrey"
-    ),
-    plot_bgcolor="white"
-)
-
-# Personnalisation des barres et des textes
-fig.update_traces(
-    textposition="outside",  
-    textfont=dict(color="black", size=14),  
-    hovertemplate="<b>Poste occupé:</b> %{x}<br><b>Nombre:</b> %{y}<extra></extra>"
-)
-
-# Afficher le graphique
-st.plotly_chart(fig, use_container_width=True)
-
-# Répartition des entreprises pour les apprenants insérés
-
-# st.subheader("Nombre d'apprenants insérés par entreprise")
-company_count = filtered_data_inseres['ENTREPRISES'].value_counts()
-
-fig = px.bar(
-    x=company_count.index,
-    y=company_count.values,
-    title="Nombre d'apprenants insérés par entreprise",
-    labels={'x': 'Entreprise', 'y': 'Nombre d\'apprenants insérés'},
-    text=company_count.values,  
-    color_discrete_sequence=px.colors.sequential.Viridis 
-)
-
-fig.update_traces(
-    marker_line_color='white',  
-    marker_line_width=1.5,  
-    opacity=0.9,  
-    textposition="outside"  
-)
-
-fig.update_layout(
-    title=dict(
-        text="📈 Nombre d'apprenants insérés par entreprise",
-        font=dict(size=24, color="#333", family="Arial"),
-        x=0.5,  
-        xanchor="center"
-    ),
-    xaxis=dict(
-        title=dict(text="Entreprise", font=dict(size=16, color="#333")),
-        tickfont=dict(size=14),
-        tickangle=-45,  
-        gridcolor="lightgrey"
-    ),
-    yaxis=dict(
-        title=dict(text="Nombre d'apprenants insérés", font=dict(size=16, color="#333")),
-        tickfont=dict(size=14),
-        gridcolor="lightgrey"
-    ),
-    plot_bgcolor="white",  
-    bargap=0.15 
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-# Afficher le nombre total d'apprenants insérés
-#st.write(f"Nombre total d'apprenants insérés : {len(filtered_data_inseres)}") 
-
-
-# # ======= MAIN APPLICATION =======
-# def main():
-#     try:
-#         st.title("📊 SUIVI INSERTION DE LA PROMOTION 6")
-        
-#         # Configuration du thème Plotly
-#         px.defaults.template = "plotly_dark"
-        
-#         # Chargement des styles CSS si nécessaire
-#         try:
-#             with open("styles.css") as f:
-#                 st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-#         except FileNotFoundError:
-#             pass
-        
-#         # Style global de l'application
-#         st.markdown(
-#             """
-#             <style>
-#                 .css-18e3th9 {background-color: #1a1a1a;}
-#                 .css-10trblm {color: #ffffff;}
-#                 .css-12ttj6m {color: #ffffff;}
-#             </style>
-#             """,
-#             unsafe_allow_html=True,
-#         )
-        
-#         # Chargement des données depuis Google Sheets
-#         df = charger_donnees()
-        
-#         # Vérifier si les données ont été chargées avec succès
-#         if df.empty:
-#             st.warning("Aucune donnée n'a pu être chargée. Veuillez vérifier votre connexion Google Sheets.")
-#             # Afficher un bouton pour réessayer
-#             if st.button("Réessayer de charger les données"):
-#                 st.cache_data.clear()
-#                 st.experimental_rerun()
-#             return
-        
-#         # Prétraitement des données
-#         df = preprocess_data(df)
-        
-#         # Barre de recherche d'étudiant
-#         st.sidebar.header("Rechercher un étudiant")
-#         search_input = st.sidebar.text_input("Entrez le numéro de téléphone ou l'e-mail :")
-        
-#         # Vérifier si une recherche est effectuée
-#         if search_input:
-#             filtered_students = df[
-#                 (df['NDETELEPHONE'].astype(str).str.contains(search_input, case=False, na=False)) |
-#                 (df['EMAIL'].str.contains(search_input, case=False, na=False))
-#             ]
-        
-#             # Affichage des résultats
-#             if not filtered_students.empty:
-#                 st.subheader("Informations Apprenant")
-        
-#                 # Parcourir les étudiants trouvés et afficher leurs informations
-#                 for _, student_data in filtered_students.iterrows():
-#                     student_data = student_data.fillna("Non spécifié")
-        
-#                     st.markdown(
-#                         f"""
-#                         <div style="background-color: #cfe5f1; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
-#                             <h4 style="color: #001728;"><center>{student_data['NOM']} {student_data['PRENOM']}</center></h4>
-#                             <ul style="color: #001728;">
-#                                 <li><strong>Numéro de Téléphone :</strong> {student_data['NDETELEPHONE']}</li>
-#                                 <li><strong>E-mail :</strong> {student_data['EMAIL']}</li>
-#                                 <li><strong>Poste occupé :</strong> {student_data['INTITULEPOSTE']}</li>
-#                                 <li><strong>Entreprise :</strong> {student_data['ENTREPRISES']}</li>
-#                                 <li><strong>Type de contrat :</strong> {student_data['TYPEDECONTRAT']}</li>
-#                                 <li><strong>Rémunération :</strong> {student_data['REMUNERATION']} FCFA</li>
-#                                 <li><strong>Durée du contrat :</strong> {student_data['DUREEMOIS']} Mois</li>
-#                                 <li><strong>Statut actuel :</strong> {'En poste' if student_data['STATUTACTUELenposteounon'] == 'OUI' else 'Non en poste'}</li>
-#                             </ul>
-#                         </div>
-#                         """,
-#                         unsafe_allow_html=True
-#                     )
-#             else:
-#                 st.error("Aucun étudiant trouvé.")
-        
-#         # Filtres interactifs
-#         st.sidebar.header("Filtres interactifs")
-        
-#         selected_domains = st.sidebar.multiselect(
-#             "Filtrer par domaine de formation", 
-#             options=df['DOMAINEFORMATION'].dropna().unique().tolist(),
-#             default=[]
-#         )
-        
-#         selected_companies = st.sidebar.multiselect(
-#             "Filtrer par entreprise", 
-#             options=df['ENTREPRISES'].dropna().unique().tolist(),
-#             default=[]
-#         )
-        
-#         selected_statuses = st.sidebar.multiselect(
-#             "Filtrer par statut", 
-#             options=["En poste", "Non en poste"],
-#             default=[]
-#         )
-        
-#         selected_contracts = st.sidebar.multiselect(
-#             "Filtrer par type de contrat", 
-#             options=df['TYPEDECONTRAT'].dropna().unique().tolist(),
-#             default=[]
-#         )
-        
-#         # Ajouter un bouton pour rafraîchir les données
-#         if st.sidebar.button("Rafraîchir les données"):
-#             st.cache_data.clear()
-#             st.experimental_rerun()
-        
-#         filtered_data = df.copy()
-        
-#         if selected_domains:
-#             filtered_data = filtered_data[filtered_data['DOMAINEFORMATION'].isin(selected_domains)]
-        
-#         if selected_companies:
-#             filtered_data = filtered_data[filtered_data['ENTREPRISES'].isin(selected_companies)]
-        
-#         if selected_statuses:
-#             status_values = ["OUI" if status == "En poste" else "NON" for status in selected_statuses]
-#             filtered_data = filtered_data[filtered_data['STATUTACTUELenposteounon'].isin(status_values)]
-        
-#         if selected_contracts:
-#             filtered_data = filtered_data[filtered_data['TYPEDECONTRAT'].isin(selected_contracts)]
-        
-#         # Logo dans la barre latérale
-#         try:
-#             st.sidebar.image("data/logo.jpg", caption="Logo de l'organisation")
-#         except FileNotFoundError:
-#             pass
-        
-#         # Formulaire d'ajout d'étudiant
-#         if "show_form" not in st.session_state:
-#             st.session_state.show_form = False
-            
-#         if st.button("Ajouter un nouvel apprenant"):
-#             st.session_state.show_form = not st.session_state.show_form
-        
-#         if st.session_state.show_form:
-#             st.write("## Formulaire d'ajout")
-#             add_data()
-        
-#         # Affichage des KPI
-#         kpi(filtered_data)
-        
-#         # Ne pas montrer le DataFrame brut en production
-#         # st.write(df.head())
-
-#         st.divider()
-#         st.subheader("Aperçus des données filtrées")
-#         st.dataframe(filtered_data.head())
-#         st.divider()
-        
-#         # Visualisations - première ligne
-#         colo1, colo2 = st.columns(2, gap="large")
-#         with colo1:
-#             # Vérifier si des données sont disponibles
-#             if filtered_data.empty or 'TYPEDECONTRAT' not in filtered_data.columns:
-#                 st.warning("Aucune donnée disponible pour la répartition des types de contrats.")
-#             else:
-#                 contract_count = filtered_data['TYPEDECONTRAT'].value_counts()
-#                 if contract_count.empty:
-#                     st.warning("Aucun type de contrat disponible pour l'analyse.")
-#                 else:
-#                     # Création du diagramme circulaire
-#                     fig = go.Figure(data=[go.Pie(
-#                         labels=contract_count.index,
-#                         values=contract_count.values,
-#                         hole=0,  
-#                         marker=dict(
-#                             colors=px.colors.qualitative.Set2, 
-#                             line=dict(color='white', width=2)
-#                         ),
-#                         textinfo='percent',  
-#                         insidetextorientation='radial',
-#                         hoverinfo='label+percent+value'
-#                     )])
+        # Personnalisation du layout pour les postes
+    fig.update_layout(
+            title=dict(
                 
-#                     # Mise en page pour séparer la légende
-#                     fig.update_layout(
-#                         title=dict(
-#                             text="📈 Répartition des types de contrats",
-#                             font=dict(size=18, color="#2c3e50", family="Arial"),
-#                             x=0.5,
-#                             xanchor="center"
-#                         ),
-#                         showlegend=True,  
-#                         legend=dict(
-#                             orientation="h",  
-#                             yanchor="bottom",
-#                             y=-0.3,  
-#                             xanchor="center",
-#                             x=0.5,
-#                             font=dict(size=14)
-#                         ),
-#                         margin=dict(t=50, b=100),  
-#                     )
-                
-#                     st.plotly_chart(fig, use_container_width=True) 
-        
-#         with colo2:
-#             #Durée Moyenne
-#             if filtered_data.empty or 'TYPEDECONTRAT' not in filtered_data.columns or 'DUREEMOIS' not in filtered_data.columns:
-#                 st.warning("Aucune donnée disponible pour la durée moyenne des contrats.")
-#             else:
-#                 contract_duration = filtered_data.groupby('TYPEDECONTRAT')['DUREEMOIS'].mean().sort_values()
-#                 if contract_duration.empty:
-#                     st.warning("Données insuffisantes pour calculer la durée moyenne des contrats.")
-#                 else:
-#                     fig = px.bar(
-#                         contract_duration,
-#                         x=contract_duration.index,
-#                         y=contract_duration.values,
-#                         title="Durée moyenne des contrats par type",
-#                         labels={'x': 'Type de contrat', 'y': 'Durée moyenne (mois)'}
-#                     )
-#                     st.plotly_chart(fig, use_container_width=True)
-        
-#         st.divider()
-        
-#         # Visualisations - deuxième ligne
-#         colon1, colon2 = st.columns(2, gap='large')
-#         with colon1:
-#             #Rémuneration
-#             if filtered_data.empty or 'REMUNERATION' not in filtered_data.columns:
-#                 st.warning("Aucune donnée disponible pour l'analyse des rémunérations.")
-#             else:
-#                 fig = px.histogram(
-#                     filtered_data,
-#                     x='REMUNERATION',
-#                     nbins=20,  
-#                     title="Distribution des rémunérations",
-#                     labels={'REMUNERATION': 'Rémunération (FCFA)'},
-#                     color_discrete_sequence=['#FF7F0E'],  
-#                     text_auto=True
-#                 )
-            
-#                 fig.update_traces(
-#                     marker_line_color='white',  
-#                     marker_line_width=1.5,  
-#                     opacity=0.9  
-#                 )
-            
-#                 # Personnalisation du layout
-#                 fig.update_layout(
-#                     title=dict(
-#                         text="📈 Distribution des rémunérations",
-#                         font=dict(size=16, color="#cfe5f1", family="Arial"), 
-#                         x=0.5,  
-#                         xanchor="right" 
-#                     ),
-#                     xaxis=dict(
-#                         title="Rémunération (FCFA)",  
-#                         titlefont=dict(size=16, color="#333"),  
-#                         tickfont=dict(size=14),
-#                         gridcolor="lightgrey"  
-#                     ),
-#                     yaxis=dict(
-#                         title="Nombre d'apprenants",  
-#                         titlefont=dict(size=16, color="#333"),  
-#                         tickfont=dict(size=14),  
-#                         gridcolor="lightgrey"  
-#                     ),
-#                     plot_bgcolor="white", 
-#                     bargap=0.1, 
-#                 )
-            
-#                 st.plotly_chart(fig, use_container_width=True)
-        
-#         with colon2:
-#             if 'DATEDEPRISEDESERVICE' in filtered_data.columns:
-#                 time_data = filtered_data[filtered_data['DATEDEPRISEDESERVICE'].notna()]
-#                 time_data = time_data[time_data['STATUTACTUELenposteounon'] == 'OUI']
-                
-#                 if not time_data.empty:
-#                     time_data['MONTH_YEAR'] = time_data['DATEDEPRISEDESERVICE'].dt.to_period('M')
-#                     evolution_data = time_data.groupby('MONTH_YEAR').size().reset_index(name='Nombre')
-#                     evolution_data['MONTH_YEAR'] = pd.to_datetime(evolution_data['MONTH_YEAR'].astype(str))
-                    
-#                     try:
-#                         locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8') 
-#                     except locale.Error:
-#                         try:
-#                             locale.setlocale(locale.LC_TIME, 'fra')  
-#                         except locale.Error:
-#                             st.warning("Impossible de configurer la locale en français. Les mois resteront en anglais.")
-                    
-#                     evolution_data['MONTH_YEAR_FR'] = evolution_data['MONTH_YEAR'].dt.strftime('%B %Y')
-#                     evolution_data['MONTH_YEAR_FR'] = evolution_data['MONTH_YEAR_FR'].str.capitalize()
-                    
-#                     evolution_data = evolution_data.sort_values('MONTH_YEAR')
-        
-#                     fig = px.line(
-#                         evolution_data, 
-#                         x='MONTH_YEAR_FR', 
-#                         y='Nombre', 
-#                         title="Évolution des apprenants en poste au fil du temps",
-#                         labels={'MONTH_YEAR_FR': 'Mois et Année', 'Nombre': 'Nombre d\'apprenants'},
-#                         markers=True
-#                     )
-                    
-#                     fig.update_traces(text=evolution_data['Nombre'], textposition='top center')
-        
-#                     fig.update_layout(
-#                         xaxis=dict(tickangle=45),
-#                         xaxis_title="Mois et Année",
-#                         yaxis_title="Nombre d'apprenants",
-#                         yaxis=dict(tickformat='d'), 
-#                     )
-                    
-#                     st.plotly_chart(fig, use_container_width=True)
-#                 else:
-#                     st.warning("Aucune donnée disponible pour l'évolution temporelle.")
-#             else:
-#                 st.warning("La colonne `DATEDEPRISEDESERVICE` n'est pas disponible ou contient uniquement des valeurs manquantes.")
-        
-#         # Répartition des bénéficiaires par structure
-#         if filtered_data.empty or 'STRUCTUREDIRECTIONPOLE' not in filtered_data.columns:
-#             st.warning("Aucune donnée disponible pour la répartition par structure.")
-#         # else:
-#         #     structure_count = filtered_data['STRUCTUREDIRECTIONPOLE'].value_counts()
-#         #     if structure_count.empty
+                text="📈 Top 10 des postes occupés ",
+                font=dict(size=14, color="white", family="Arial"),
+                x=0.5,  
+                xanchor="center"
+            ),
+            xaxis=dict(
+                showgrid = False,
+                title="Postes",
+                tickangle=-45,
+                tickfont=dict(size=12)
+            ),
+            yaxis=dict(
+                showgrid = False,
+                title="Nombre d'apprenants insérés",
+                gridcolor="lightgrey"
+            ),
 
-#     except Exception as e:
-#         st.error(f"Une erreur s'est produite : {str(e)}")
+            bargap=0.2,
+            height=500,
+            width=700
+        )
+
+        # Personnalisation des barres et des textes
+    fig.update_traces(
+            textposition="outside",  
+            textfont=dict(color="white", size=14),  
+            hovertemplate="<b>Poste occupé:</b> %{x}<br><b>Nombre:</b> %{y}<extra></extra>"
+        )
+
+        # Afficher le graphique
+    st.plotly_chart(fig, use_container_width=True)
 
 
-# if __name__ == "__main__":
-#     main()
+  # Définition du seuil (fixe ou interactif)
+
+with colon3:
+    st.subheader("Données filtrées")
+    st.dataframe(filtered_data)
+    height=500,
+    width=700
+
+
+st.divider()
+# 📌 Disposer les éléments sur la même ligne
+col1, col2 = st.columns([1, 1])  # Ajuste les proportions si nécessaire
+
+col1, col2 = st.columns(2)
+
+with col1:
+    # 🔽 Slider pour définir le seuil
+    seuil = st.slider("", min_value=1, max_value=20, value=2)
+
+if 'ENTREPRISES' in filtered_data_inseres.columns:
+    structure_count = filtered_data_inseres['ENTREPRISES'].value_counts()
+
+    # Séparer les entreprises principales et secondaires
+    principales = structure_count[structure_count >= seuil]
+    secondaires = structure_count[structure_count < seuil]
+
+    with col1:
+        # 📈 Graphique des principales entreprises
+        if not principales.empty:
+            fig = px.bar(
+                x=principales.index,
+                y=principales.values,
+                title=f"Principales entreprises (≥ {seuil} bénéficiaires)",
+                labels={'x': 'Structure', 'y': 'Nombre de bénéficiaires insérés'},
+                text=principales.values
+            )
+            fig.update_traces(marker_color="#FF6600", textposition='outside')
+            st.plotly_chart(fig, use_container_width=True)  # Largeur ajustée
+
+    with col2:
+        # 📜 Tableau téléchargeable pour les entreprises secondaires
+        if not secondaires.empty:
+            df_secondaires = pd.DataFrame({
+                'Entreprise': secondaires.index,
+                'Nombre de bénéficiaires': secondaires.values
+            }).sort_values('Nombre de bénéficiaires', ascending=False)
+
+            st.dataframe(df_secondaires, use_container_width=True, height=500)  # Largeur ajustée
+
+            # 📂 Bouton de téléchargement
+            # csv = df_secondaires.to_csv(index=False).encode('utf-8')
+            # st.download_button(
+            #     label="📥 Télécharger le tableau",
+            #     data=csv,
+            #     file_name="entreprises_secondaires.csv",
+            #     mime="text/csv"
+            # )
+
+else:
+    st.error("❌ La colonne 'ENTREPRISES' est absente des données filtrées.")
+st.divider()

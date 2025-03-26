@@ -32,7 +32,7 @@ chatbot = st.Page("sections/chatbot.py", title="Chatbot", icon=":material/chat:"
 pg = st.navigation(
     {
         "Info": [Information],
-        "Projects": [promotion5,promotion6, promotion2],
+        "Projects": [promotion5,promotion6],
         "Chatbot": [chatbot]
     }
 )
